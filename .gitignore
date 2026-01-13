@@ -140,16 +140,19 @@ local followDistance=12
 local heightOffset=6
 local smoothness=5
 
+-- Nuevo: ignorar jugadores de mi equipo
 local function getClosestPlayer()
 	local closest, minDist=nil, math.huge
 	if not C or not C:FindFirstChild("HumanoidRootPart") then return nil end
 	local myPos=C.HumanoidRootPart.Position
 	for _, plr in pairs(Plrs:GetPlayers()) do
 		if plr~=P and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-			local dist=(plr.Character.HumanoidRootPart.Position-myPos).Magnitude
-			if dist<minDist then
-				minDist=dist
-				closest=plr
+			if plr.Team ~= P.Team then
+				local dist=(plr.Character.HumanoidRootPart.Position-myPos).Magnitude
+				if dist<minDist then
+					minDist=dist
+					closest=plr
+				end
 			end
 		end
 	end
