@@ -15,8 +15,8 @@ local G = Instance.new("ScreenGui", P:WaitForChild("PlayerGui"))
 G.Name = "ArsenalGui"
 
 local W = Instance.new("Frame", G)
-W.Size = UDim2.new(0,320,0,360)
-W.Position = UDim2.new(0.5,-160,0.5,-180)
+W.Size = UDim2.new(0,360,0,420)
+W.Position = UDim2.new(0.5,-180,0.5,-210)
 W.BackgroundColor3 = Color3.fromRGB(20,20,20)
 W.Active = true
 
@@ -52,7 +52,7 @@ SF.ScrollBarThickness = 8
 SF.CanvasSize = UDim2.new(0,0,0,1)
 
 local Cn = Instance.new("Frame", SF)
-Cn.Size = UDim2.new(1,0,0,420)
+Cn.Size = UDim2.new(1,0,0,600)
 Cn.BackgroundTransparency = 1
 
 local function ajustarScroll()
@@ -66,9 +66,32 @@ local function ajustarScroll()
 	SF.CanvasSize = UDim2.new(0,0,0,h)
 end
 
---== ESP ==
+--== Carpetas estilo escritorio ==
+local function createFolder(title, posY)
+	local folder = Instance.new("Frame", Cn)
+	folder.Size = UDim2.new(1,-40,0,0)
+	folder.Position = UDim2.new(0,20,0,posY)
+	folder.BackgroundColor3 = Color3.fromRGB(30,30,30)
+	folder.BorderSizePixel = 0
+	local lbl = Instance.new("TextLabel", folder)
+	lbl.Size = UDim2.new(1,0,0,20)
+	lbl.Text = title
+	lbl.TextColor3 = Color3.new(1,1,1)
+	lbl.BackgroundTransparency = 1
+	lbl.TextXAlignment = Enum.TextXAlignment.Left
+	lbl.TextSize = 14
+	return folder
+end
+
+local optionsFolder = createFolder("Opciones", 10)
+local keybindFolder = createFolder("Teclas", 160)
+
+--== Opciones ==
 local ESP = false
+local camFollow = false
+local autoRejoin = false
 local espObjs = {}
+
 local function isEnemy(plr)
 	return plr ~= P and plr.Team ~= P.Team
 end
@@ -102,21 +125,10 @@ local function toggleESP(state)
 	end
 end
 
-Plrs.PlayerAdded:Connect(function(plr)
-	plr.CharacterAdded:Connect(function()
-		if ESP then task.wait(0.5) applyESP(plr) end
-	end)
-end)
-
-for _,plr in pairs(Plrs:GetPlayers()) do
-	plr.CharacterAdded:Connect(function()
-		if ESP then task.wait(0.5) applyESP(plr) end
-	end)
-end
-
-local ESPBtn = Instance.new("TextButton", Cn)
-ESPBtn.Size = UDim2.new(1,-40,0,30)
-ESPBtn.Position = UDim2.new(0,20,0,10)
+-- Botones de opciones
+local ESPBtn = Instance.new("TextButton", optionsFolder)
+ESPBtn.Size = UDim2.new(1,0,0,30)
+ESPBtn.Position = UDim2.new(0,0,0,30)
 ESPBtn.Text = "ESP: OFF"
 ESPBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
 ESPBtn.TextColor3 = Color3.new(1,1,1)
@@ -128,18 +140,9 @@ ESPBtn.MouseButton1Click:Connect(function()
 	ajustarScroll()
 end)
 
---== Cámara F1 ==
-local camFollow = false
-local followDistance = 12
-local heightOffset = 6
-local smoothness = 5
-local lastVisiblePos = nil
-local occlusionDelay = 0.15
-local occlusionTimer = 0
-
-local CamBtn = Instance.new("TextButton", Cn)
-CamBtn.Size = UDim2.new(1,-40,0,30)
-CamBtn.Position = UDim2.new(0,20,0,50)
+local CamBtn = Instance.new("TextButton", optionsFolder)
+CamBtn.Size = UDim2.new(1,0,0,30)
+CamBtn.Position = UDim2.new(0,0,0,70)
 CamBtn.Text = "Camara F1: OFF"
 CamBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
 CamBtn.TextColor3 = Color3.new(1,1,1)
@@ -149,59 +152,54 @@ CamBtn.MouseButton1Click:Connect(function()
 	CamBtn.Text = camFollow and "Camara F1: ON" or "Camara F1: OFF"
 end)
 
---== Keybinds GUI ==
-local KeybindsLabel = Instance.new("TextLabel", Cn)
-KeybindsLabel.Size = UDim2.new(1,-40,0,20)
-KeybindsLabel.Position = UDim2.new(0,20,0,130)
-KeybindsLabel.Text = "Configura las teclas:"
-KeybindsLabel.TextColor3 = Color3.new(1,1,1)
-KeybindsLabel.BackgroundTransparency = 1
-KeybindsLabel.TextXAlignment = Enum.TextXAlignment.Left
-KeybindsLabel.TextSize = 14
+local ARBtn = Instance.new("TextButton", optionsFolder)
+ARBtn.Size = UDim2.new(1,0,0,30)
+ARBtn.Position = UDim2.new(0,0,0,110)
+ARBtn.Text = "AutoRejoin: OFF"
+ARBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+ARBtn.TextColor3 = Color3.new(1,1,1)
+ARBtn.BorderSizePixel = 0
+ARBtn.MouseButton1Click:Connect(function()
+	autoRejoin = not autoRejoin
+	ARBtn.Text = autoRejoin and "AutoRejoin: ON" or "AutoRejoin: OFF"
+	ajustarScroll()
+	if autoRejoin then
+		task.defer(function()
+			task.wait(2)
+			pcall(function() TS:Teleport(game.PlaceId,P) end)
+		end)
+	end
+end)
 
--- Camara F1
-local CamKeyLabel = Instance.new("TextLabel", Cn)
-CamKeyLabel.Size = UDim2.new(0.5,-30,0,20)
-CamKeyLabel.Position = UDim2.new(0,20,0,160)
-CamKeyLabel.Text = "Cámara F1:"
-CamKeyLabel.TextColor3 = Color3.new(1,1,1)
-CamKeyLabel.BackgroundTransparency = 1
-CamKeyLabel.TextXAlignment = Enum.TextXAlignment.Left
-CamKeyLabel.TextSize = 14
-
-local CamKeyBox = Instance.new("TextBox", Cn)
-CamKeyBox.Size = UDim2.new(0.4,-10,0,20)
-CamKeyBox.Position = UDim2.new(0.5,0,0,160)
-CamKeyBox.Text = "R"
-CamKeyBox.ClearTextOnFocus = false
-CamKeyBox.TextColor3 = Color3.new(0,0,0)
-CamKeyBox.BackgroundColor3 = Color3.fromRGB(200,200,200)
-CamKeyBox.TextSize = 14
-
--- ESP
-local ESPKeyLabel = Instance.new("TextLabel", Cn)
-ESPKeyLabel.Size = UDim2.new(0.5,-30,0,20)
-ESPKeyLabel.Position = UDim2.new(0,20,0,190)
-ESPKeyLabel.Text = "ESP:"
-ESPKeyLabel.TextColor3 = Color3.new(1,1,1)
-ESPKeyLabel.BackgroundTransparency = 1
-ESPKeyLabel.TextXAlignment = Enum.TextXAlignment.Left
-ESPKeyLabel.TextSize = 14
-
-local ESPKeyBox = Instance.new("TextBox", Cn)
-ESPKeyBox.Size = UDim2.new(0.4,-10,0,20)
-ESPKeyBox.Position = UDim2.new(0.5,0,0,190)
-ESPKeyBox.Text = "T"
-ESPKeyBox.ClearTextOnFocus = false
-ESPKeyBox.TextColor3 = Color3.new(0,0,0)
-ESPKeyBox.BackgroundColor3 = Color3.fromRGB(200,200,200)
-ESPKeyBox.TextSize = 14
-
---== Keybinds Lógicos ==
+--== Keybinds ==
 local Keybinds = {
 	CamaraF1 = Enum.KeyCode.R,
 	ESP = Enum.KeyCode.T,
 }
+
+local function createKeybindUI(labelText, defaultKey, posY)
+	local lbl = Instance.new("TextLabel", keybindFolder)
+	lbl.Size = UDim2.new(0.5,0,0,20)
+	lbl.Position = UDim2.new(0,0,0,posY)
+	lbl.Text = labelText
+	lbl.TextColor3 = Color3.new(1,1,1)
+	lbl.BackgroundTransparency = 1
+	lbl.TextXAlignment = Enum.TextXAlignment.Left
+	lbl.TextSize = 14
+
+	local box = Instance.new("TextBox", keybindFolder)
+	box.Size = UDim2.new(0.4,-10,0,20)
+	box.Position = UDim2.new(0.55,0,0,posY)
+	box.Text = defaultKey.Name
+	box.ClearTextOnFocus = false
+	box.TextColor3 = Color3.new(0,0,0)
+	box.BackgroundColor3 = Color3.fromRGB(200,200,200)
+	box.TextSize = 14
+	return box
+end
+
+local CamKeyBox = createKeybindUI("Cámara F1:", Keybinds.CamaraF1, 30)
+local ESPKeyBox = createKeybindUI("ESP:", Keybinds.ESP, 60)
 
 CamKeyBox.FocusLost:Connect(function()
 	local key = CamKeyBox.Text:upper()
@@ -223,7 +221,14 @@ ESPKeyBox.FocusLost:Connect(function()
 	end
 end)
 
---== Funciones de cámara visible ==
+--== Cámara visible ==
+local followDistance = 12
+local heightOffset = 6
+local smoothness = 5
+local lastVisiblePos = nil
+local occlusionDelay = 0.15
+local occlusionTimer = 0
+
 local function esVisible(objetivo)
 	if not objetivo or not objetivo.Character then return false end
 	local hrp = objetivo.Character:FindFirstChild("HumanoidRootPart")
@@ -292,27 +297,6 @@ UIS.InputBegan:Connect(function(input, gameProcessed)
 			ESPBtn.Text = ESP and "ESP: ON" or "ESP: OFF"
 			toggleESP(ESP)
 		end
-	end
-end)
-
---== Auto Rejoin ==
-local autoRejoin=false
-local ARBtn=Instance.new("TextButton",Cn)
-ARBtn.Size=UDim2.new(1,-40,0,30)
-ARBtn.Position=UDim2.new(0,20,0,220)
-ARBtn.Text="AutoRejoin: OFF"
-ARBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
-ARBtn.TextColor3 = Color3.new(1,1,1)
-ARBtn.BorderSizePixel = 0
-ARBtn.MouseButton1Click:Connect(function()
-	autoRejoin = not autoRejoin
-	ARBtn.Text = autoRejoin and "AutoRejoin: ON" or "AutoRejoin: OFF"
-	ajustarScroll()
-	if autoRejoin then
-		task.defer(function()
-			task.wait(2)
-			pcall(function() TS:Teleport(game.PlaceId,P) end)
-		end)
 	end
 end)
 
