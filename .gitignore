@@ -15,8 +15,8 @@ local G = Instance.new("ScreenGui", P:WaitForChild("PlayerGui"))
 G.Name = "ArsenalGui"
 
 local W = Instance.new("Frame", G)
-W.Size = UDim2.new(0,320,0,340)
-W.Position = UDim2.new(0.5,-160,0.5,-170)
+W.Size = UDim2.new(0,320,0,360)
+W.Position = UDim2.new(0.5,-160,0.5,-180)
 W.BackgroundColor3 = Color3.fromRGB(20,20,20)
 W.Active = true
 
@@ -52,7 +52,7 @@ SF.ScrollBarThickness = 8
 SF.CanvasSize = UDim2.new(0,0,0,1)
 
 local Cn = Instance.new("Frame", SF)
-Cn.Size = UDim2.new(1,0,0,400)
+Cn.Size = UDim2.new(1,0,0,420)
 Cn.BackgroundTransparency = 1
 
 local function ajustarScroll()
@@ -128,12 +128,7 @@ ESPBtn.MouseButton1Click:Connect(function()
 	ajustarScroll()
 end)
 
---== CONFIGURACIÓN DE TECLAS ==
-local Keybinds = {
-	CamaraF1 = Enum.KeyCode.R, -- cambia la tecla aquí
-}
-
---== Cámara F1 solo enemigos visibles ==
+--== Cámara F1 ==
 local camFollow = false
 local followDistance = 12
 local heightOffset = 6
@@ -149,21 +144,86 @@ CamBtn.Text = "Camara F1: OFF"
 CamBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
 CamBtn.TextColor3 = Color3.new(1,1,1)
 CamBtn.BorderSizePixel = 0
-
 CamBtn.MouseButton1Click:Connect(function()
 	camFollow = not camFollow
 	CamBtn.Text = camFollow and "Camara F1: ON" or "Camara F1: OFF"
 end)
 
-UIS.InputBegan:Connect(function(input,gameProcessed)
-	if not gameProcessed and input.UserInputType == Enum.UserInputType.Keyboard then
-		if input.KeyCode == Keybinds.CamaraF1 then
-			camFollow = not camFollow
-			CamBtn.Text = camFollow and "Camara F1: ON" or "Camara F1: OFF"
-		end
+--== Keybinds GUI ==
+local KeybindsLabel = Instance.new("TextLabel", Cn)
+KeybindsLabel.Size = UDim2.new(1,-40,0,20)
+KeybindsLabel.Position = UDim2.new(0,20,0,130)
+KeybindsLabel.Text = "Configura las teclas:"
+KeybindsLabel.TextColor3 = Color3.new(1,1,1)
+KeybindsLabel.BackgroundTransparency = 1
+KeybindsLabel.TextXAlignment = Enum.TextXAlignment.Left
+KeybindsLabel.TextSize = 14
+
+-- Camara F1
+local CamKeyLabel = Instance.new("TextLabel", Cn)
+CamKeyLabel.Size = UDim2.new(0.5,-30,0,20)
+CamKeyLabel.Position = UDim2.new(0,20,0,160)
+CamKeyLabel.Text = "Cámara F1:"
+CamKeyLabel.TextColor3 = Color3.new(1,1,1)
+CamKeyLabel.BackgroundTransparency = 1
+CamKeyLabel.TextXAlignment = Enum.TextXAlignment.Left
+CamKeyLabel.TextSize = 14
+
+local CamKeyBox = Instance.new("TextBox", Cn)
+CamKeyBox.Size = UDim2.new(0.4,-10,0,20)
+CamKeyBox.Position = UDim2.new(0.5,0,0,160)
+CamKeyBox.Text = "R"
+CamKeyBox.ClearTextOnFocus = false
+CamKeyBox.TextColor3 = Color3.new(0,0,0)
+CamKeyBox.BackgroundColor3 = Color3.fromRGB(200,200,200)
+CamKeyBox.TextSize = 14
+
+-- ESP
+local ESPKeyLabel = Instance.new("TextLabel", Cn)
+ESPKeyLabel.Size = UDim2.new(0.5,-30,0,20)
+ESPKeyLabel.Position = UDim2.new(0,20,0,190)
+ESPKeyLabel.Text = "ESP:"
+ESPKeyLabel.TextColor3 = Color3.new(1,1,1)
+ESPKeyLabel.BackgroundTransparency = 1
+ESPKeyLabel.TextXAlignment = Enum.TextXAlignment.Left
+ESPKeyLabel.TextSize = 14
+
+local ESPKeyBox = Instance.new("TextBox", Cn)
+ESPKeyBox.Size = UDim2.new(0.4,-10,0,20)
+ESPKeyBox.Position = UDim2.new(0.5,0,0,190)
+ESPKeyBox.Text = "T"
+ESPKeyBox.ClearTextOnFocus = false
+ESPKeyBox.TextColor3 = Color3.new(0,0,0)
+ESPKeyBox.BackgroundColor3 = Color3.fromRGB(200,200,200)
+ESPKeyBox.TextSize = 14
+
+--== Keybinds Lógicos ==
+local Keybinds = {
+	CamaraF1 = Enum.KeyCode.R,
+	ESP = Enum.KeyCode.T,
+}
+
+CamKeyBox.FocusLost:Connect(function()
+	local key = CamKeyBox.Text:upper()
+	local success, enumKey = pcall(function() return Enum.KeyCode[key] end)
+	if success and enumKey then
+		Keybinds.CamaraF1 = enumKey
+	else
+		CamKeyBox.Text = Keybinds.CamaraF1.Name
 	end
 end)
 
+ESPKeyBox.FocusLost:Connect(function()
+	local key = ESPKeyBox.Text:upper()
+	local success, enumKey = pcall(function() return Enum.KeyCode[key] end)
+	if success and enumKey then
+		Keybinds.ESP = enumKey
+	else
+		ESPKeyBox.Text = Keybinds.ESP.Name
+	end
+end)
+
+--== Funciones de cámara visible ==
 local function esVisible(objetivo)
 	if not objetivo or not objetivo.Character then return false end
 	local hrp = objetivo.Character:FindFirstChild("HumanoidRootPart")
@@ -222,11 +282,26 @@ RS.RenderStepped:Connect(function(dt)
 	end
 end)
 
+--== Input global ==
+UIS.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	if input.UserInputType == Enum.UserInputType.Keyboard then
+		if input.KeyCode == Keybinds.CamaraF1 then
+			camFollow = not camFollow
+			CamBtn.Text = camFollow and "Camara F1: ON" or "Camara F1: OFF"
+		elseif input.KeyCode == Keybinds.ESP then
+			ESP = not ESP
+			ESPBtn.Text = ESP and "ESP: ON" or "ESP: OFF"
+			toggleESP(ESP)
+		end
+	end
+end)
+
 --== Auto Rejoin ==
 local autoRejoin=false
 local ARBtn=Instance.new("TextButton",Cn)
 ARBtn.Size=UDim2.new(1,-40,0,30)
-ARBtn.Position=UDim2.new(0,20,0,90)
+ARBtn.Position=UDim2.new(0,20,0,220)
 ARBtn.Text="AutoRejoin: OFF"
 ARBtn.BackgroundColor3=Color3.fromRGB(60,60,60)
 ARBtn.TextColor3=Color3.new(1,1,1)
