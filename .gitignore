@@ -6,11 +6,11 @@ local UIS = game:GetService("UserInputService")
 local TS = game:GetService("TeleportService")
 local Camera = workspace.CurrentCamera
 
---== personaje ==--
+--== personaje ==
 local C = P.Character or P.CharacterAdded:Wait()
 P.CharacterAdded:Connect(function(char) C = char end)
 
---== GUI principal ==--
+--== GUI principal ==
 local G = Instance.new("ScreenGui", P:WaitForChild("PlayerGui"))
 G.Name = "ArsenalGui"
 
@@ -20,7 +20,7 @@ W.Position = UDim2.new(0.5,-160,0.5,-170)
 W.BackgroundColor3 = Color3.fromRGB(20,20,20)
 W.Active = true
 
---== barra superior ==--
+--== barra superior ==
 local B = Instance.new("Frame", W)
 B.Size = UDim2.new(1,0,0,30)
 B.BackgroundColor3 = Color3.fromRGB(40,40,40)
@@ -43,7 +43,7 @@ CBtn.TextColor3 = Color3.new(1,1,1)
 CBtn.BorderSizePixel = 0
 CBtn.MouseButton1Click:Connect(function() G:Destroy() end)
 
---== scroll ==--
+--== scroll ==
 local SF = Instance.new("ScrollingFrame", W)
 SF.Size = UDim2.new(1,0,1,-30)
 SF.Position = UDim2.new(0,0,0,30)
@@ -66,7 +66,7 @@ local function ajustarScroll()
 	SF.CanvasSize = UDim2.new(0,0,0,h)
 end
 
---== ESP ==--
+--== ESP ==
 local ESP = false
 local espObjs = {}
 local function isEnemy(plr)
@@ -128,16 +128,15 @@ ESPBtn.MouseButton1Click:Connect(function()
 	ajustarScroll()
 end)
 
---== Cámara F1 usando GetPartsObscuringTarget ==--
+--== Cámara F1 solo enemigos visibles ==
 local camFollow = false
-local camKey = Enum.KeyCode.F
 local followDistance = 12
 local heightOffset = 6
 local smoothness = 5
-
 local lastVisiblePos = nil
 local occlusionDelay = 0.15
 local occlusionTimer = 0
+local camKey = Enum.KeyCode.F
 
 local CamBtn = Instance.new("TextButton", Cn)
 CamBtn.Size = UDim2.new(1,-40,0,30)
@@ -148,67 +147,78 @@ CamBtn.TextColor3 = Color3.new(1,1,1)
 CamBtn.BorderSizePixel = 0
 
 CamBtn.MouseButton1Click:Connect(function()
-    camFollow = not camFollow
-    CamBtn.Text = camFollow and "Camara F1: ON" or "Camara F1: OFF"
+	camFollow = not camFollow
+	CamBtn.Text = camFollow and "Camara F1: ON" or "Camara F1: OFF"
 end)
 
 UIS.InputBegan:Connect(function(input,gameProcessed)
-    if not gameProcessed and input.UserInputType == Enum.UserInputType.Keyboard then
-        if input.KeyCode == camKey then
-            camFollow = not camFollow
-            CamBtn.Text = camFollow and "Camara F1: ON" or "Camara F1: OFF"
-        end
-    end
+	if not gameProcessed and input.UserInputType == Enum.UserInputType.Keyboard then
+		if input.KeyCode == camKey then
+			camFollow = not camFollow
+			CamBtn.Text = camFollow and "Camara F1: ON" or "Camara F1: OFF"
+		end
+	end
 end)
 
-local function isOccluded(camPos, targetPos)
-    local ignoreList = {}
-    -- ignorar personajes para GetPartsObscuringTarget
-    table.insert(ignoreList, C)
-    local parts = workspace.CurrentCamera:GetPartsObscuringTarget({camPos, targetPos}, ignoreList)
-    -- si hay partes *entre* la cámara y el enemigo significa oclusión
-    return #parts > 0
+local function esVisible(objetivo)
+	if not objetivo or not objetivo.Character then return false end
+	local hrp = objetivo.Character:FindFirstChild("HumanoidRootPart")
+	if not hrp then return false end
+	local targetPos = hrp.Position + Vector3.new(0,2,0)
+	local camPos = Camera.CFrame.Position
+	local ignoreList = {C, objetivo.Character}
+	local parts = workspace.CurrentCamera:GetPartsObscuringTarget({camPos, targetPos}, ignoreList)
+	return #parts == 0
+end
+
+local function getVisibleEnemy()
+	for _,plr in pairs(Plrs:GetPlayers()) do
+		if plr ~= P and plr.Team ~= P.Team and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+			local hum = plr.Character:FindFirstChild("Humanoid")
+			if hum and hum.Health > 0 and esVisible(plr) then
+				return plr
+			end
+		end
+	end
+	return nil
 end
 
 RS.RenderStepped:Connect(function(dt)
-    if camFollow then
-        local tgt = getClosestEnemy()
-        if tgt and tgt.Character and tgt.Character:FindFirstChild("HumanoidRootPart") then
-            local root = tgt.Character.HumanoidRootPart
-            local camPos = Camera.CFrame.Position
-            local targetPos = root.Position + Vector3.new(0,2,0)
+	if camFollow then
+		local tgt = getVisibleEnemy()
+		if tgt and tgt.Character and tgt.Character:FindFirstChild("HumanoidRootPart") then
+			local root = tgt.Character.HumanoidRootPart
+			local targetPos = root.Position + Vector3.new(0,2,0)
+			local visible = esVisible(tgt)
 
-            local occluded = isOccluded(camPos, targetPos)
+			if visible then
+				lastVisiblePos = root.Position
+				occlusionTimer = 0
 
-            if not occluded then
-                lastVisiblePos = root.Position
-                occlusionTimer = 0
-
-                local moveDir = root.Velocity.Magnitude > 1 and root.Velocity.Unit or root.CFrame.LookVector
-                local desiredPos = root.Position - moveDir * followDistance + Vector3.new(0, heightOffset, 0)
-                local newPos = Camera.CFrame.Position:Lerp(desiredPos, dt * smoothness)
-                local targetLook = CFrame.new(newPos, targetPos)
-                Camera.CFrame = Camera.CFrame:Lerp(targetLook, dt * smoothness)
-            else
-                occlusionTimer = occlusionTimer + dt
-                if occlusionTimer < occlusionDelay and lastVisiblePos then
-                    local desiredPos = lastVisiblePos + Vector3.new(0,heightOffset,0) - (root.CFrame.LookVector * followDistance)
-                    local newPos = Camera.CFrame.Position:Lerp(desiredPos, dt*smoothness)
-                    local targetLook = CFrame.new(newPos, lastVisiblePos + Vector3.new(0,2,0))
-                    Camera.CFrame = Camera.CFrame:Lerp(targetLook, dt*smoothness)
-                else
-                    if lastVisiblePos then
-                        local targetLook = CFrame.new(Camera.CFrame.Position, lastVisiblePos + Vector3.new(0,2,0))
-                        Camera.CFrame = Camera.CFrame:Lerp(targetLook, dt*smoothness)
-                    end
-                end
-            end
-        end
-    end
+				local moveDir = root.Velocity.Magnitude > 1 and root.Velocity.Unit or root.CFrame.LookVector
+				local desiredPos = root.Position - moveDir * followDistance + Vector3.new(0, heightOffset, 0)
+				local newPos = Camera.CFrame.Position:Lerp(desiredPos, dt*smoothness)
+				local targetLook = CFrame.new(newPos, targetPos)
+				Camera.CFrame = Camera.CFrame:Lerp(targetLook, dt*smoothness)
+			else
+				occlusionTimer = occlusionTimer + dt
+				if occlusionTimer < occlusionDelay and lastVisiblePos then
+					local desiredPos = lastVisiblePos + Vector3.new(0,heightOffset,0) - (root.CFrame.LookVector * followDistance)
+					local newPos = Camera.CFrame.Position:Lerp(desiredPos, dt*smoothness)
+					local targetLook = CFrame.new(newPos, lastVisiblePos + Vector3.new(0,2,0))
+					Camera.CFrame = Camera.CFrame:Lerp(targetLook, dt*smoothness)
+				else
+					if lastVisiblePos then
+						local targetLook = CFrame.new(Camera.CFrame.Position, lastVisiblePos + Vector3.new(0,2,0))
+						Camera.CFrame = Camera.CFrame:Lerp(targetLook, dt*smoothness)
+					end
+				end
+			end
+		end
+	end
 end)
 
-
---== Auto Rejoin ==--
+--== Auto Rejoin ==
 local autoRejoin=false
 local ARBtn=Instance.new("TextButton",Cn)
 ARBtn.Size=UDim2.new(1,-40,0,30)
@@ -229,7 +239,7 @@ ARBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
---== Mover y redimensionar ventana ==--
+--== Mover y redimensionar ventana ==
 local drag, dragStart, startPos=false
 B.InputBegan:Connect(function(i)
 	if i.UserInputType==Enum.UserInputType.MouseButton1 then
