@@ -1,44 +1,40 @@
 local player = game.Players.LocalPlayer
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
 local mouse = player:GetMouse()
 
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
-
 player.CharacterAdded:Connect(function(char)
 	character = char
 	humanoid = character:WaitForChild("Humanoid")
 end)
 
-------------------------------------------------
 -- GUI
-------------------------------------------------
 local gui = Instance.new("ScreenGui")
 gui.Name = "ControlVelocidadGui"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local ventana = Instance.new("Frame")
-ventana.Size = UDim2.new(0, 320, 0, 220)
-ventana.Position = UDim2.new(0.5, -160, 0.5, -110)
-ventana.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ventana.Size = UDim2.new(0,320,0,300)
+ventana.Position = UDim2.new(0.5,-160,0.5,-150)
+ventana.BackgroundColor3 = Color3.fromRGB(0,0,0)
 ventana.BorderSizePixel = 0
 ventana.Parent = gui
 ventana.Active = true
 
-------------------------------------------------
 -- Barra superior
-------------------------------------------------
 local barra = Instance.new("Frame")
-barra.Size = UDim2.new(1, 0, 0, 30)
-barra.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+barra.Size = UDim2.new(1,0,0,30)
+barra.BackgroundColor3 = Color3.fromRGB(20,20,20)
 barra.BorderSizePixel = 0
 barra.Parent = ventana
 
 local titulo = Instance.new("TextLabel")
-titulo.Size = UDim2.new(1, -30, 1, 0)
-titulo.Position = UDim2.new(0, 10, 0, 0)
+titulo.Size = UDim2.new(1,-30,1,0)
+titulo.Position = UDim2.new(0,10,0,0)
 titulo.Text = player.Name
 titulo.TextXAlignment = Enum.TextXAlignment.Left
 titulo.TextColor3 = Color3.fromRGB(255,255,255)
@@ -46,24 +42,19 @@ titulo.BackgroundTransparency = 1
 titulo.TextSize = 16
 titulo.Parent = barra
 
--- Botón cerrar
+-- Cerrar
 local cerrar = Instance.new("TextButton")
-cerrar.Size = UDim2.new(0, 30, 0, 30)
-cerrar.Position = UDim2.new(1, -30, 0, 0)
+cerrar.Size = UDim2.new(0,30,0,30)
+cerrar.Position = UDim2.new(1,-30,0,0)
 cerrar.Text = "X"
 cerrar.TextScaled = true
 cerrar.BackgroundColor3 = Color3.fromRGB(40,40,40)
 cerrar.BorderSizePixel = 0
 cerrar.TextColor3 = Color3.fromRGB(255,255,255)
 cerrar.Parent = barra
+cerrar.MouseButton1Click:Connect(function() gui:Destroy() end)
 
-cerrar.MouseButton1Click:Connect(function()
-	gui:Destroy()
-end)
-
-------------------------------------------------
--- SCROLL FRAME
-------------------------------------------------
+-- Scroll frame
 local scrollFrame = Instance.new("ScrollingFrame")
 scrollFrame.Size = UDim2.new(1,0,1,-30)
 scrollFrame.Position = UDim2.new(0,0,0,30)
@@ -73,27 +64,23 @@ scrollFrame.CanvasSize = UDim2.new(0,0,0,1)
 scrollFrame.Parent = ventana
 
 local contenido = Instance.new("Frame")
-contenido.Size = UDim2.new(1,0,0,220)
+contenido.Size = UDim2.new(1,0,0,300)
 contenido.BackgroundTransparency = 1
 contenido.Parent = scrollFrame
 
-------------------------------------------------
 -- WalkSpeed slider
-------------------------------------------------
 local velocidadTexto = Instance.new("TextLabel")
-velocidadTexto.Size = UDim2.new(1, -20, 0, 30)
-velocidadTexto.Position = UDim2.new(0, 10, 0, 20)
+velocidadTexto.Size = UDim2.new(1,-20,0,30)
+velocidadTexto.Position = UDim2.new(0,10,0,20)
 velocidadTexto.TextColor3 = Color3.fromRGB(255,255,255)
 velocidadTexto.BackgroundTransparency = 1
 velocidadTexto.TextSize = 14
 velocidadTexto.TextXAlignment = Enum.TextXAlignment.Left
 velocidadTexto.Parent = contenido
 
-local minSpeed = 8
-local maxSpeed = 50
-
+local minSpeed, maxSpeed = 8, 50
 local sliderBar = Instance.new("Frame")
-sliderBar.Size = UDim2.new(1, -40, 0, 6)
+sliderBar.Size = UDim2.new(1,-40,0,6)
 sliderBar.Position = UDim2.new(0,20,0,70)
 sliderBar.BackgroundColor3 = Color3.fromRGB(60,60,60)
 sliderBar.BorderSizePixel = 0
@@ -107,17 +94,16 @@ sliderKnob.BorderSizePixel = 0
 sliderKnob.Parent = sliderBar
 sliderKnob.Active = true
 
-local sliding = false
+local sliding=false
 local function updateSpeedFromSlider()
 	local percent = sliderKnob.Position.X.Offset / (sliderBar.AbsoluteSize.X - sliderKnob.AbsoluteSize.X)
 	percent = math.clamp(percent,0,1)
-	local speed = math.floor(minSpeed + (maxSpeed - minSpeed)*percent)
+	local speed = math.floor(minSpeed + (maxSpeed-minSpeed)*percent)
 	humanoid.WalkSpeed = speed
 	velocidadTexto.Text = "Velocidad actual: "..speed
 end
-
 local function updateSliderFromSpeed()
-	local percent = (humanoid.WalkSpeed - minSpeed)/(maxSpeed-minSpeed)
+	local percent = (humanoid.WalkSpeed-minSpeed)/(maxSpeed-minSpeed)
 	percent = math.clamp(percent,0,1)
 	sliderKnob.Position = UDim2.new(0, percent*(sliderBar.AbsoluteSize.X - sliderKnob.AbsoluteSize.X),0.5,-7)
 	velocidadTexto.Text = "Velocidad actual: "..humanoid.WalkSpeed
@@ -125,25 +111,21 @@ end
 
 sliderKnob.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		sliding = true
+		sliding=true
 		mouse.Icon = "rbxasset://textures/Cursors/ResizeEW.png"
 	end
 end)
-
 UserInputService.InputEnded:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		sliding = false
+		sliding=false
 		mouse.Icon = ""
 	end
 end)
 
-------------------------------------------------
 -- Fly
-------------------------------------------------
-local flyActivo = false
-local flyVelocidad = 50
-
-local flyBoton = Instance.new("TextButton")
+local flyActivo=false
+local flyVelocidad=50
+local flyBoton=Instance.new("TextButton")
 flyBoton.Size = UDim2.new(0,100,0,30)
 flyBoton.Position = UDim2.new(0,10,0,110)
 flyBoton.Text = "Fly: OFF"
@@ -168,43 +150,37 @@ flySliderKnob.BorderSizePixel = 0
 flySliderKnob.Parent = flySliderBar
 flySliderKnob.Active = true
 
-local flySliding = false
-local flyMinSpeed = 20
-local flyMaxSpeed = 200
-
+local flySliding=false
+local flyMinSpeed, flyMaxSpeed = 20,200
 local function updateFlyFromSlider()
 	local percent = flySliderKnob.Position.X.Offset / (flySliderBar.AbsoluteSize.X - flySliderKnob.AbsoluteSize.X)
 	percent = math.clamp(percent,0,1)
 	flyVelocidad = flyMinSpeed + (flyMaxSpeed-flyMinSpeed)*percent
 end
-
 local function updateSliderFromFly()
-	local percent = (flyVelocidad - flyMinSpeed)/(flyMaxSpeed - flyMinSpeed)
+	local percent = (flyVelocidad - flyMinSpeed)/(flyMaxSpeed-flyMinSpeed)
 	percent = math.clamp(percent,0,1)
-	flySliderKnob.Position = UDim2.new(0, percent*(flySliderBar.AbsoluteSize.X - flySliderKnob.AbsoluteSize.X),0.5,-7)
+	flySliderKnob.Position = UDim2.new(0, percent*(flySliderBar.AbsoluteSize.X-flySliderKnob.AbsoluteSize.X),0.5,-7)
 end
 
 flySliderKnob.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		flySliding = true
+	if input.UserInputType==Enum.UserInputType.MouseButton1 then
+		flySliding=true
 	end
 end)
-
 UserInputService.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		flySliding = false
+	if input.UserInputType==Enum.UserInputType.MouseButton1 then
+		flySliding=false
 	end
 end)
-
 UserInputService.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement and flySliding then
+	if input.UserInputType==Enum.UserInputType.MouseMovement and flySliding then
 		local x = input.Position.X - flySliderBar.AbsolutePosition.X
-		x = math.clamp(x,0,flySliderBar.AbsoluteSize.X - flySliderKnob.AbsoluteSize.X)
+		x = math.clamp(x,0,flySliderBar.AbsoluteSize.X-flySliderKnob.AbsoluteSize.X)
 		flySliderKnob.Position = UDim2.new(0,x,0.5,-7)
 		updateFlyFromSlider()
 	end
 end)
-
 updateSliderFromFly()
 
 flyBoton.MouseButton1Click:Connect(function()
@@ -212,7 +188,6 @@ flyBoton.MouseButton1Click:Connect(function()
 	flyBoton.Text = flyActivo and "Fly: ON" or "Fly: OFF"
 end)
 
--- Fly loop
 local bodyVel
 RunService.RenderStepped:Connect(function()
 	if flyActivo then
@@ -232,8 +207,8 @@ RunService.RenderStepped:Connect(function()
 			if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0,1,0) end
 			if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then dir = dir - Vector3.new(0,1,0) end
 			dir = dir.Unit
-			if dir ~= dir then dir = Vector3.new(0,0,0) end
-			bodyVel.Velocity = dir * flyVelocidad
+			if dir~=dir then dir = Vector3.new(0,0,0) end
+			bodyVel.Velocity = dir*flyVelocidad
 		end
 	else
 		if bodyVel then
@@ -243,58 +218,101 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
-------------------------------------------------
--- MOVER VENTANA + SLIDER
-------------------------------------------------
-local dragging = false
-local dragStart, startPos
-
+-- Mover ventana + slider
+local dragging=false
+local dragStart,startPos
 barra.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = true
-		dragStart = input.Position
-		startPos = ventana.Position
+	if input.UserInputType==Enum.UserInputType.MouseButton1 then
+		dragging=true
+		dragStart=input.Position
+		startPos=ventana.Position
 	end
 end)
-
 barra.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = false
-	end
+	if input.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end
 end)
-
 UserInputService.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement then
+	if input.UserInputType==Enum.UserInputType.MouseMovement then
 		if dragging then
-			local delta = input.Position - dragStart
-			ventana.Position = UDim2.new(startPos.X.Scale,startPos.X.Offset + delta.X,startPos.Y.Scale,startPos.Y.Offset + delta.Y)
+			local delta=input.Position-dragStart
+			ventana.Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+delta.X,startPos.Y.Scale,startPos.Y.Offset+delta.Y)
 		elseif sliding then
-			local x = math.clamp(input.Position.X - sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X - sliderKnob.AbsoluteSize.X)
-			sliderKnob.Position = UDim2.new(0,x,0.5,-7)
+			local x=math.clamp(input.Position.X-sliderBar.AbsolutePosition.X,0,sliderBar.AbsoluteSize.X-sliderKnob.AbsoluteSize.X)
+			sliderKnob.Position=UDim2.new(0,x,0.5,-7)
 			updateSpeedFromSlider()
 		end
 	end
 end)
-
-------------------------------------------------
--- INICIALIZAR
-------------------------------------------------
 updateSliderFromSpeed()
-updateSliderFromFly()
 
--- Ajustar canvas según contenido
+-- Ajustar scroll
 local function ajustarScroll()
-	local altura = 0
-	for _, child in pairs(contenido:GetChildren()) do
+	local altura=0
+	for _,child in pairs(contenido:GetChildren()) do
 		if child:IsA("GuiObject") then
-			local bottom = child.Position.Y.Offset + child.AbsoluteSize.Y
-			if bottom > altura then
-				altura = bottom
-			end
+			local bottom=child.Position.Y.Offset+child.AbsoluteSize.Y
+			if bottom>altura then altura=bottom end
 		end
 	end
-	scrollFrame.CanvasSize = UDim2.new(0,0,0,altura)
+	scrollFrame.CanvasSize=UDim2.new(0,0,0,altura)
 end
-
 task.wait()
 ajustarScroll()
+
+-- ESP
+local espEnabled = false
+local espObjects = {}
+
+local function applyESP(p)
+	if p==player then return end
+	if not p.Character then return end
+	if espObjects[p] then return end
+	local highlight=Instance.new("Highlight")
+	highlight.Name="ESP"
+	highlight.FillTransparency=1
+	highlight.OutlineColor=Color3.fromRGB(255,0,0)
+	highlight.OutlineTransparency=0
+	highlight.Adornee=p.Character
+	highlight.Parent=p.Character
+	espObjects[p]=highlight
+end
+
+local function removeESP(p)
+	if espObjects[p] then
+		espObjects[p]:Destroy()
+		espObjects[p]=nil
+	end
+end
+
+local function toggleESP(state)
+	espEnabled=state
+	for _,p in ipairs(Players:GetPlayers()) do
+		if espEnabled then applyESP(p) else removeESP(p) end
+	end
+end
+
+Players.PlayerAdded:Connect(function(p)
+	p.CharacterAdded:Connect(function()
+		if espEnabled then task.wait(0.5) applyESP(p) end
+	end)
+end)
+for _,p in ipairs(Players:GetPlayers()) do
+	p.CharacterAdded:Connect(function()
+		if espEnabled then task.wait(0.5) applyESP(p) end
+	end)
+end
+
+local espButton = Instance.new("TextButton")
+espButton.Size = UDim2.new(1,-40,0,30)
+espButton.Position = UDim2.new(0,20,0,200)
+espButton.Text = "ESP: OFF"
+espButton.BackgroundColor3 = Color3.fromRGB(40,40,40)
+espButton.TextColor3 = Color3.fromRGB(255,255,255)
+espButton.BorderSizePixel = 0
+espButton.Parent = contenido
+
+espButton.MouseButton1Click:Connect(function()
+	espEnabled = not espEnabled
+	espButton.Text = espEnabled and "ESP: ON" or "ESP: OFF"
+	toggleESP(espEnabled)
+end)
