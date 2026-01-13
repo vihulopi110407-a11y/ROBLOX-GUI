@@ -26,13 +26,14 @@ B.Size = UDim2.new(1,0,0,30)
 B.BackgroundColor3 = Color3.fromRGB(40,40,40)
 
 local T = Instance.new("TextLabel", B)
-T.Size = UDim2.new(1,-30,1,0)
+T.Size = UDim2.new(1,-60,1,0)
 T.Text = "Arsenal Control"
 T.TextColor3 = Color3.new(1,1,1)
 T.BackgroundTransparency = 1
 T.TextXAlignment = Enum.TextXAlignment.Left
 T.TextSize = 16
 
+--== botón cerrar ==
 local CBtn = Instance.new("TextButton", B)
 CBtn.Size = UDim2.new(0,30,0,30)
 CBtn.Position = UDim2.new(1,-30,0,0)
@@ -42,6 +43,27 @@ CBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
 CBtn.TextColor3 = Color3.new(1,1,1)
 CBtn.BorderSizePixel = 0
 CBtn.MouseButton1Click:Connect(function() G:Destroy() end)
+
+--== botón minimizar ==
+local MinBtn = Instance.new("TextButton", B)
+MinBtn.Size = UDim2.new(0,30,0,30)
+MinBtn.Position = UDim2.new(1,-60,0,0)
+MinBtn.Text = "_"
+MinBtn.TextScaled = true
+MinBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+MinBtn.TextColor3 = Color3.new(1,1,1)
+MinBtn.BorderSizePixel = 0
+
+local isMinimized = false
+local originalSize = W.Size
+MinBtn.MouseButton1Click:Connect(function()
+	if isMinimized then
+		W.Size = originalSize
+	else
+		W.Size = UDim2.new(originalSize.X.Scale, originalSize.X.Offset, 0, 30)
+	end
+	isMinimized = not isMinimized
+end)
 
 --== panel lateral (menú) ==
 local menuPanel = Instance.new("Frame", W)
@@ -70,7 +92,6 @@ contentPanel.Size = UDim2.new(1,-120,1,-30)
 contentPanel.Position = UDim2.new(0,120,0,30)
 contentPanel.BackgroundColor3 = Color3.fromRGB(25,25,25)
 
--- función para mostrar panel de contenido
 local function showPanel(panel)
 	for _,v in pairs(contentPanel:GetChildren()) do
 		if v:IsA("Frame") then
@@ -233,5 +254,41 @@ UIS.InputChanged:Connect(function(i)
 	if i.UserInputType == Enum.UserInputType.MouseMovement and drag then
 		local d = i.Position - dragStart
 		W.Position = UDim2.new(startPos.X.Scale,startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+	end
+end)
+
+--== Hotkeys ==
+UIS.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+	if input.KeyCode == Keybinds.ESP then
+		ESP = not ESP
+		ESPBtn.Text = ESP and "ESP: ON" or "ESP: OFF"
+		toggleESP(ESP)
+	elseif input.KeyCode == Keybinds.CamaraF1 then
+		camFollow = not camFollow
+		CamBtn.Text = camFollow and "Camara F1: ON" or "Camara F1: OFF"
+	end
+end)
+
+--== Actualizar ESP dinámicamente ==
+Plrs.PlayerAdded:Connect(function(plr)
+	plr.CharacterAdded:Connect(function()
+		if ESP then applyESP(plr) end
+	end)
+end)
+
+--== Camera Follow ==
+RS.RenderStepped:Connect(function()
+	if camFollow then
+		local target
+		for _,plr in pairs(Plrs:GetPlayers()) do
+			if isEnemy(plr) and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+				target = plr.Character.HumanoidRootPart
+				break
+			end
+		end
+		if target then
+			Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
+		end
 	end
 end)
