@@ -1,262 +1,50 @@
-local P=game.Players.LocalPlayer
-local UIS=game:GetService("UserInputService")
-local RS=game:GetService("RunService")
-local Plrs=game:GetService("Players")
-local M=P:GetMouse()
-local C=P.Character or P.CharacterAdded:Wait()
-local H=C:WaitForChild("Humanoid")
-P.CharacterAdded:Connect(function(c) C=c H=C:WaitForChild("Humanoid") end)
+local P = game.Players.LocalPlayer
+local Plrs = game:GetService("Players")
+local RS = game:GetService("RunService")
 
--- GUI
-local G=Instance.new("ScreenGui",P:WaitForChild("PlayerGui"))
-G.Name="ControlVelocidadGui"
-local W=Instance.new("Frame",G)
-W.Size=UDim2.new(0,320,0,300)
-W.Position=UDim2.new(0.5,-160,0.5,-150)
-W.BackgroundColor3=Color3.new(0,0,0)
-W.BorderSizePixel=0
-W.Active=true
+local C = P.Character or P.CharacterAdded:Wait()
+P.CharacterAdded:Connect(function(char) C = char end)
 
--- Barra superior
-local B=Instance.new("Frame",W)
-B.Size=UDim2.new(1,0,0,30)
-B.BackgroundColor3=Color3.fromRGB(20,20,20)
-local T=Instance.new("TextLabel",B)
-T.Size=UDim2.new(1,-30,1,0)
-T.Position=UDim2.new(0,10,0,0)
-T.Text=P.Name
-T.TextXAlignment=Enum.TextXAlignment.Left
-T.TextColor3=Color3.new(1,1,1)
-T.BackgroundTransparency=1
-T.TextSize=16
+-- GUI mínimo
+local G = Instance.new("ScreenGui", P:WaitForChild("PlayerGui"))
+G.Name = "CamFollowGui"
+local W = Instance.new("Frame", G)
+W.Size = UDim2.new(0,300,0,50)
+W.Position = UDim2.new(0.5,-150,0,10)
+W.BackgroundColor3 = Color3.fromRGB(20,20,20)
+W.BorderSizePixel = 0
+W.Active = true
 
-local CBtn=Instance.new("TextButton",B)
-CBtn.Size=UDim2.new(0,30,0,30)
-CBtn.Position=UDim2.new(1,-30,0,0)
-CBtn.Text="X"
-CBtn.TextScaled=true
-CBtn.BackgroundColor3=Color3.fromRGB(40,40,40)
-CBtn.BorderSizePixel=0
-CBtn.TextColor3=Color3.new(1,1,1)
-CBtn.MouseButton1Click:Connect(function() G:Destroy() end)
+local T = Instance.new("TextLabel", W)
+T.Size = UDim2.new(1,0,1,0)
+T.Text = "Cámara: Seguimiento activado"
+T.TextColor3 = Color3.fromRGB(255,255,255)
+T.BackgroundTransparency = 1
+T.TextScaled = true
 
--- Scroll + contenido
-local SF=Instance.new("ScrollingFrame",W)
-SF.Size=UDim2.new(1,0,1,-30)
-SF.Position=UDim2.new(0,0,0,30)
-SF.BackgroundTransparency=1
-SF.ScrollBarThickness=8
-SF.CanvasSize=UDim2.new(0,0,0,1)
-local Cn=Instance.new("Frame",SF)
-Cn.Size=UDim2.new(1,0,0,300)
-Cn.BackgroundTransparency=1
-
--- WalkSpeed
-local VelT=Instance.new("TextLabel",Cn)
-VelT.Size=UDim2.new(1,-20,0,30)
-VelT.Position=UDim2.new(0,10,0,20)
-VelT.TextColor3=Color3.new(1,1,1)
-VelT.BackgroundTransparency=1
-VelT.TextSize=14
-VelT.TextXAlignment=Enum.TextXAlignment.Left
-
-local minS,maxS=8,50
-local SB=Instance.new("Frame",Cn)
-SB.Size=UDim2.new(1,-40,0,6)
-SB.Position=UDim2.new(0,20,0,70)
-SB.BackgroundColor3=Color3.fromRGB(60,60,60)
-SB.BorderSizePixel=0
-local SK=Instance.new("Frame",SB)
-SK.Size=UDim2.new(0,14,0,14)
-SK.Position=UDim2.new(0,0,0.5,-7)
-SK.BackgroundColor3=Color3.fromRGB(200,200,200)
-SK.BorderSizePixel=0
-SK.Active=true
-local sliding=false
-local function updateSpeed()
-	local p=SK.Position.X.Offset/(SB.AbsoluteSize.X-SK.AbsoluteSize.X)
-	p=math.clamp(p,0,1)
-	local s=math.floor(minS+(maxS-minS)*p)
-	H.WalkSpeed=s
-	VelT.Text="Velocidad actual: "..s
-end
-local function setSliderFromSpeed()
-	local p=(H.WalkSpeed-minS)/(maxS-minS)
-	p=math.clamp(p,0,1)
-	SK.Position=UDim2.new(0,p*(SB.AbsoluteSize.X-SK.AbsoluteSize.X),0.5,-7)
-	VelT.Text="Velocidad actual: "..H.WalkSpeed
-end
-
-SK.InputBegan:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseButton1 then sliding=true M.Icon="rbxasset://textures/Cursors/ResizeEW.png" end
-end)
-UIS.InputEnded:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseButton1 then sliding=false M.Icon="" end
-end)
-
--- Fly
-local fly=false
-local flyV=50
-local FB=Instance.new("TextButton",Cn)
-FB.Size=UDim2.new(0,100,0,30)
-FB.Position=UDim2.new(0,10,0,110)
-FB.Text="Fly: OFF"
-FB.TextScaled=true
-FB.BackgroundColor3=Color3.fromRGB(60,60,60)
-FB.BorderSizePixel=0
-FB.TextColor3=Color3.new(1,1,1)
-
-local FSB=Instance.new("Frame",Cn)
-FSB.Size=UDim2.new(1,-40,0,6)
-FSB.Position=UDim2.new(0,20,0,160)
-FSB.BackgroundColor3=Color3.fromRGB(80,80,80)
-FSB.BorderSizePixel=0
-local FSK=Instance.new("Frame",FSB)
-FSK.Size=UDim2.new(0,14,0,14)
-FSK.Position=UDim2.new(0,0,0.5,-7)
-FSK.BackgroundColor3=Color3.fromRGB(200,200,200)
-FSK.BorderSizePixel=0
-FSK.Active=true
-local flySliding=false
-local fMin,fMax=20,200
-local function updateFly()
-	local p=FSK.Position.X.Offset/(FSB.AbsoluteSize.X-FSK.AbsoluteSize.X)
-	p=math.clamp(p,0,1)
-	flyV=fMin+(fMax-fMin)*p
-end
-local function setFlySlider()
-	local p=(flyV-fMin)/(fMax-fMin)
-	p=math.clamp(p,0,1)
-	FSK.Position=UDim2.new(0,p*(FSB.AbsoluteSize.X-FSK.AbsoluteSize.X),0.5,-7)
-end
-
-FSK.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then flySliding=true end end)
-UIS.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then flySliding=false end end)
-UIS.InputChanged:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseMovement and flySliding then
-		local x=i.Position.X-FSB.AbsolutePosition.X
-		x=math.clamp(x,0,FSB.AbsoluteSize.X-FSK.AbsoluteSize.X)
-		FSK.Position=UDim2.new(0,x,0.5,-7)
-		updateFly()
+-- Función para calcular jugador más cercano
+local function getClosestPlayer()
+	local closest = nil
+	local minDist = math.huge
+	if not C or not C:FindFirstChild("HumanoidRootPart") then return nil end
+	local myPos = C.HumanoidRootPart.Position
+	for _, plr in pairs(Plrs:GetPlayers()) do
+		if plr ~= P and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+			local dist = (plr.Character.HumanoidRootPart.Position - myPos).Magnitude
+			if dist < minDist then
+				minDist = dist
+				closest = plr
+			end
+		end
 	end
-end)
-setFlySlider()
-FB.MouseButton1Click:Connect(function()
-	fly=not fly
-	FB.Text=fly and "Fly: ON" or "Fly: OFF"
-end)
+	return closest
+end
 
-local BV
+-- Actualizar cámara cada frame
 RS.RenderStepped:Connect(function()
-	if fly and C and C:FindFirstChild("HumanoidRootPart") then
-		if not BV then
-			BV=Instance.new("BodyVelocity",C.HumanoidRootPart)
-			BV.MaxForce=Vector3.new(1e5,1e5,1e5)
-			BV.Velocity=Vector3.new(0,0,0)
-		end
-		local d=Vector3.new(0,0,0)
-		if UIS:IsKeyDown(Enum.KeyCode.W) then d=d+workspace.CurrentCamera.CFrame.LookVector end
-		if UIS:IsKeyDown(Enum.KeyCode.S) then d=d-workspace.CurrentCamera.CFrame.LookVector end
-		if UIS:IsKeyDown(Enum.KeyCode.A) then d=d-workspace.CurrentCamera.CFrame.RightVector end
-		if UIS:IsKeyDown(Enum.KeyCode.D) then d=d+workspace.CurrentCamera.CFrame.RightVector end
-		if UIS:IsKeyDown(Enum.KeyCode.Space) then d=d+Vector3.new(0,1,0) end
-		if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then d=d-Vector3.new(0,1,0) end
-		if d.Magnitude>0 then d=d.Unit else d=Vector3.new(0,0,0) end
-		BV.Velocity=d*flyV
-	elseif BV then BV:Destroy() BV=nil end
-end)
-
--- Mover ventana
-local drag=false
-local dragStart,startPos
-B.InputBegan:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseButton1 then drag=true dragStart=i.Position startPos=W.Position end
-end)
-B.InputEnded:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseButton1 then drag=false end
-end)
-UIS.InputChanged:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseMovement then
-		if drag then
-			local d=i.Position-dragStart
-			W.Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+d.X,startPos.Y.Scale,startPos.Y.Offset+d.Y)
-		elseif sliding then
-			local x=math.clamp(i.Position.X-SB.AbsolutePosition.X,0,SB.AbsoluteSize.X-SK.AbsoluteSize.X)
-			SK.Position=UDim2.new(0,x,0.5,-7)
-			updateSpeed()
-		end
+	local target = getClosestPlayer()
+	if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+		game.Workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable
+		game.Workspace.CurrentCamera.CFrame = CFrame.new(game.Workspace.CurrentCamera.CFrame.Position, target.Character.HumanoidRootPart.Position)
 	end
-end)
-setSliderFromSpeed()
-
--- Ajustar tamaño ventana (arrastrando esquina inferior derecha)
-local resizeBtn=Instance.new("Frame",W)
-resizeBtn.Size=UDim2.new(0,20,0,20)
-resizeBtn.Position=UDim2.new(1,-20,1,-20)
-resizeBtn.BackgroundColor3=Color3.fromRGB(80,80,80)
-resizeBtn.BorderSizePixel=0
-resizeBtn.Active=true
-local resizing=false
-resizeBtn.InputBegan:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseButton1 then resizing=true end
-end)
-UIS.InputEnded:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseButton1 then resizing=false end
-end)
-UIS.InputChanged:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseMovement and resizing then
-		local p=i.Position-W.AbsolutePosition
-		W.Size=UDim2.new(0,math.clamp(p.X,200,600),0,math.clamp(p.Y,200,600))
-	end
-end)
-
--- Ajustar scroll
-local function ajustarScroll()
-	local h=0
-	for _,v in pairs(Cn:GetChildren()) do
-		if v:IsA("GuiObject") then
-			local b=v.Position.Y.Offset+v.AbsoluteSize.Y
-			if b>h then h=b end
-		end
-	end
-	SF.CanvasSize=UDim2.new(0,0,0,h)
-end
-task.wait()
-ajustarScroll()
-
--- ESP
-local ESP=false
-local espObjs={}
-local function applyESP(p)
-	if p==P or not p.Character or espObjs[p] then return end
-	local h=Instance.new("Highlight",p.Character)
-	h.Name="ESP"
-	h.FillTransparency=1
-	h.OutlineColor=Color3.fromRGB(255,0,0)
-	h.OutlineTransparency=0
-	h.Adornee=p.Character
-	espObjs[p]=h
-end
-local function removeESP(p) if espObjs[p] then espObjs[p]:Destroy() espObjs[p]=nil end end
-local function toggleESP(state)
-	ESP=state
-	for _,p in pairs(Plrs:GetPlayers()) do if ESP then applyESP(p) else removeESP(p) end end
-end
-Plrs.PlayerAdded:Connect(function(p)
-	p.CharacterAdded:Connect(function() if ESP then task.wait(0.5) applyESP(p) end end)
-end)
-for _,p in pairs(Plrs:GetPlayers()) do
-	p.CharacterAdded:Connect(function() if ESP then task.wait(0.5) applyESP(p) end end)
-end
-local EB=Instance.new("TextButton",Cn)
-EB.Size=UDim2.new(1,-40,0,30)
-EB.Position=UDim2.new(0,20,0,200)
-EB.Text="ESP: OFF"
-EB.BackgroundColor3=Color3.fromRGB(40,40,40)
-EB.TextColor3=Color3.new(1,1,1)
-EB.BorderSizePixel=0
-EB.MouseButton1Click:Connect(function()
-	ESP=not ESP
-	EB.Text=ESP and "ESP: ON" or "ESP: OFF"
-	toggleESP(ESP)
 end)
