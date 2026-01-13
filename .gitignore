@@ -128,16 +128,16 @@ ESPBtn.MouseButton1Click:Connect(function()
 	ajustarScroll()
 end)
 
---== Cámara F1 mejorada con detección de paredes y accesorios ==--
+--== Cámara F1 definitiva con detección de paredes sólidas ==--
 local camFollow = false
 local camKey = Enum.KeyCode.F
 local followDistance = 12
 local heightOffset = 6
 local smoothness = 5
 
---== variables adicionales para F1 mejorada ==--
+--== variables adicionales para F1 ==--
 local lastVisiblePos = nil
-local occlusionDelay = 0.15 -- segundos antes de considerar que está oculto
+local occlusionDelay = 0.15
 local occlusionTimer = 0
 
 local CamBtn = Instance.new("TextButton", Cn)
@@ -152,38 +152,55 @@ CamBtn.MouseButton1Click:Connect(function()
 	CamBtn.Text = camFollow and "Camara F1: ON" or "Camara F1: OFF"
 end)
 
-UIS.InputBegan:Connect(function(input,gameProcessed)
-	if not gameProcessed and input.UserInputType==Enum.UserInputType.Keyboard then
-		if input.KeyCode==camKey then
+UIS.InputBegan:Connect(function(input, gameProcessed)
+	if not gameProcessed and input.UserInputType == Enum.UserInputType.Keyboard then
+		if input.KeyCode == camKey then
 			camFollow = not camFollow
 			CamBtn.Text = camFollow and "Camara F1: ON" or "Camara F1: OFF"
 		end
 	end
 end)
 
---== función de visibilidad mejorada ==
+--== Función de visibilidad sólida ==
 local function objetivoVisible(camaraPos, objetivo)
 	if not objetivo or not objetivo.Character then return false end
-	local partsToCheck = {}
 	local hrp = objetivo.Character:FindFirstChild("HumanoidRootPart")
 	local head = objetivo.Character:FindFirstChild("Head")
-	if hrp then table.insert(partsToCheck, hrp) end
-	if head then table.insert(partsToCheck, head) end
+	if not hrp and not head then return false end
 
-	for _, part in pairs(partsToCheck) do
+	-- Puntos de prueba: HumanoidRootPart y Head
+	local points = {}
+	if hrp then table.insert(points, hrp.Position) end
+	if head then table.insert(points, head.Position) end
+
+	for _, point in pairs(points) do
 		local rayParams = RaycastParams.new()
 		rayParams.FilterType = Enum.RaycastFilterType.Blacklist
 		rayParams.FilterDescendantsInstances = {C, objetivo.Character} -- ignorar nuestro personaje y el objetivo
-		local direction = part.Position - camaraPos
+		rayParams.IgnoreWater = true
+
+		local direction = point - camaraPos
 		local rayResult = workspace:Raycast(camaraPos, direction, rayParams)
-		if not rayResult or rayResult.Instance:IsDescendantOf(objetivo.Character) then
-			return true -- al menos un punto visible
+
+		if rayResult then
+			local hit = rayResult.Instance
+			-- Solo considerar obstáculos sólidos: CanCollide true y no parte de un jugador
+			if hit.CanCollide and not hit:IsDescendantOf(C) and not hit:IsDescendantOf(objetivo.Character) then
+				-- bloqueado
+				return false
+			else
+				-- toca al objetivo o accesorio sin colisión → seguir probando otros puntos
+			end
+		else
+			-- nada bloqueando → visible
+			return true
 		end
 	end
-	return false -- todos bloqueados
+	-- todos los raycasts bloqueados
+	return true
 end
 
---== RenderStepped actualizado para F1 ==
+--== RenderStepped actualizado ==
 RS.RenderStepped:Connect(function(dt)
 	if camFollow then
 		local tgt = getClosestEnemy()
@@ -218,8 +235,6 @@ RS.RenderStepped:Connect(function(dt)
 		end
 	end
 end)
-
-
 
 --== Auto Rejoin ==--
 local autoRejoin=false
