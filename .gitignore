@@ -1,4 +1,4 @@
---== referencias ==--
+--== referencias ==
 local P = game.Players.LocalPlayer
 local Plrs = game:GetService("Players")
 local RS = game:GetService("RunService")
@@ -128,6 +128,11 @@ ESPBtn.MouseButton1Click:Connect(function()
 	ajustarScroll()
 end)
 
+--== CONFIGURACIÓN DE TECLAS ==
+local Keybinds = {
+	CamaraF1 = Enum.KeyCode.R, -- cambia la tecla aquí
+}
+
 --== Cámara F1 solo enemigos visibles ==
 local camFollow = false
 local followDistance = 12
@@ -136,7 +141,6 @@ local smoothness = 5
 local lastVisiblePos = nil
 local occlusionDelay = 0.15
 local occlusionTimer = 0
-local camKey = Enum.KeyCode.F
 
 local CamBtn = Instance.new("TextButton", Cn)
 CamBtn.Size = UDim2.new(1,-40,0,30)
@@ -153,7 +157,7 @@ end)
 
 UIS.InputBegan:Connect(function(input,gameProcessed)
 	if not gameProcessed and input.UserInputType == Enum.UserInputType.Keyboard then
-		if input.KeyCode == camKey then
+		if input.KeyCode == Keybinds.CamaraF1 then
 			camFollow = not camFollow
 			CamBtn.Text = camFollow and "Camara F1: ON" or "Camara F1: OFF"
 		end
@@ -236,44 +240,6 @@ ARBtn.MouseButton1Click:Connect(function()
 			task.wait(2)
 			pcall(function() TS:Teleport(game.PlaceId,P) end)
 		end)
-	end
-end)
-
---== Mover y redimensionar ventana ==
-local drag, dragStart, startPos=false
-B.InputBegan:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseButton1 then
-		drag=true
-		dragStart=i.Position
-		startPos=W.Position
-	end
-end)
-B.InputEnded:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseButton1 then drag=false end
-end)
-UIS.InputChanged:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseMovement and drag then
-		local d=i.Position - dragStart
-		W.Position = UDim2.new(startPos.X.Scale,startPos.X.Offset+d.X,startPos.Y.Scale,startPos.Y.Offset+d.Y)
-	end
-end)
-
-local resizeBtn=Instance.new("Frame",W)
-resizeBtn.Size=UDim2.new(0,20,0,20)
-resizeBtn.Position=UDim2.new(1,-20,1,-20)
-resizeBtn.BackgroundColor3=Color3.fromRGB(80,80,80)
-resizeBtn.Active=true
-local resizing=false
-resizeBtn.InputBegan:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseButton1 then resizing=true end
-end)
-UIS.InputEnded:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseButton1 then resizing=false end
-end)
-UIS.InputChanged:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseMovement and resizing then
-		local p=i.Position-W.AbsolutePosition
-		W.Size=UDim2.new(0,math.clamp(p.X,200,600),0,math.clamp(p.Y,200,600))
 	end
 end)
 
