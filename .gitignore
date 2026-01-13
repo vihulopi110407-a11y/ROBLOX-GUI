@@ -52,7 +52,6 @@ local Cn=Instance.new("Frame",SF)
 Cn.Size=UDim2.new(1,0,0,300)
 Cn.BackgroundTransparency=1
 
--- Funciones
 local function ajustarScroll()
 	local h=0
 	for _,v in pairs(Cn:GetChildren()) do
@@ -111,28 +110,31 @@ ESPBtn.MouseButton1Click:Connect(function()
 	ajustarScroll()
 end)
 
--- Cámara seguidora
+-- Camara estilo F1
 local camFollow=false
 local CamBtn=Instance.new("TextButton",Cn)
 CamBtn.Size=UDim2.new(1,-40,0,30)
 CamBtn.Position=UDim2.new(0,20,0,50)
-CamBtn.Text="Camara: OFF"
+CamBtn.Text="Camara F1: OFF"
 CamBtn.BackgroundColor3=Color3.fromRGB(60,60,60)
 CamBtn.TextColor3=Color3.new(1,1,1)
 CamBtn.BorderSizePixel=0
 CamBtn.MouseButton1Click:Connect(function()
 	camFollow=not camFollow
-	CamBtn.Text=camFollow and "Camara: ON" or "Camara: OFF"
+	CamBtn.Text=camFollow and "Camara F1: ON" or "Camara F1: OFF"
 	ajustarScroll()
 end)
 
 local Cam = workspace.CurrentCamera
+local followDistance=12
+local heightOffset=6
+local smoothness=5
+
 local function getClosestPlayer()
-	local closest=nil
-	local minDist=math.huge
+	local closest, minDist=nil, math.huge
 	if not C or not C:FindFirstChild("HumanoidRootPart") then return nil end
 	local myPos=C.HumanoidRootPart.Position
-	for _,plr in pairs(Plrs:GetPlayers()) do
+	for _, plr in pairs(Plrs:GetPlayers()) do
 		if plr~=P and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
 			local dist=(plr.Character.HumanoidRootPart.Position-myPos).Magnitude
 			if dist<minDist then
@@ -148,10 +150,12 @@ RS.RenderStepped:Connect(function(dt)
 	if camFollow then
 		local target=getClosestPlayer()
 		if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-			local targetPos=target.Character.HumanoidRootPart.Position
-			local camPos=Cam.CFrame.Position
-			local newPos=camPos:Lerp(targetPos, dt*5)
-			Cam.CFrame=CFrame.new(newPos, newPos+Cam.CFrame.LookVector)
+			local root=target.Character.HumanoidRootPart
+			local moveDir=root.Velocity.Magnitude>1 and root.Velocity.Unit or root.CFrame.LookVector
+			local desiredPos=root.Position - moveDir*followDistance + Vector3.new(0,heightOffset,0)
+			local newPos=Cam.CFrame.Position:Lerp(desiredPos, dt*smoothness)
+			local lookAt=root.Position + Vector3.new(0,2,0)
+			Cam.CFrame=CFrame.new(newPos, lookAt)
 		end
 	end
 end)
@@ -172,7 +176,7 @@ ARBtn.MouseButton1Click:Connect(function()
 	if autoRejoin then
 		task.defer(function()
 			task.wait(2)
-			pcall(function() game:GetService("TeleportService"):Teleport(game.PlaceId,P) end)
+			pcall(function() TS:Teleport(game.PlaceId,P) end)
 		end)
 	end
 end)
@@ -193,7 +197,7 @@ UIS.InputChanged:Connect(function(i)
 	end
 end)
 
--- Redimensionar ventana (esquina inferior derecha)
+-- Redimensionar ventana
 local resizeBtn=Instance.new("Frame",W)
 resizeBtn.Size=UDim2.new(0,20,0,20)
 resizeBtn.Position=UDim2.new(1,-20,1,-20)
