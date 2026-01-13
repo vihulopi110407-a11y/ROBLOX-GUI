@@ -75,7 +75,7 @@ local function applyESP(p)
 	if not p.Character then return end
 
 	local color
-	if p.Team == P.Team then
+	if p.TeamColor == P.TeamColor then
 		color = Color3.fromRGB(0, 120, 255) -- azul compañeros
 	else
 		color = Color3.fromRGB(255, 0, 0)   -- rojo enemigos
@@ -170,7 +170,7 @@ local function getClosestEnemy()
 
 	for _,plr in pairs(Plrs:GetPlayers()) do
 		if plr ~= P and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-			if plr.Team ~= P.Team then -- solo enemigos
+			if plr.TeamColor ~= P.TeamColor then -- solo enemigos
 				local dist = (plr.Character.HumanoidRootPart.Position - myPos).Magnitude
 				if dist < minDist then
 					minDist = dist
@@ -223,19 +223,19 @@ end)
 
 local drag, dragStart, startPos = false
 B.InputBegan:Connect(function(i)
-	if i.UserInputType == Enum.UserInputType.MouseButton1 then
+	if i.UserInputType==Enum.UserInputType.MouseButton1 then
 		drag = true
 		dragStart = i.Position
 		startPos = W.Position
 	end
 end)
 B.InputEnded:Connect(function(i)
-	if i.UserInputType == Enum.UserInputType.MouseButton1 then
+	if i.UserInputType==Enum.UserInputType.MouseButton1 then
 		drag = false
 	end
 end)
 UIS.InputChanged:Connect(function(i)
-	if i.UserInputType == Enum.UserInputType.MouseMovement and drag then
+	if i.UserInputType==Enum.UserInputType.MouseMovement and drag then
 		local d = i.Position - dragStart
 		W.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
 	end
@@ -249,13 +249,13 @@ resizeBtn.Active = true
 
 local resizing = false
 resizeBtn.InputBegan:Connect(function(i)
-	if i.UserInputType == Enum.UserInputType.MouseButton1 then resizing = true end
+	if i.UserInputType==Enum.UserInputType.MouseButton1 then resizing = true end
 end)
 UIS.InputEnded:Connect(function(i)
-	if i.UserInputType == Enum.UserInputType.MouseButton1 then resizing = false end
+	if i.UserInputType==Enum.UserInputType.MouseButton1 then resizing = false end
 end)
 UIS.InputChanged:Connect(function(i)
-	if i.UserInputType == Enum.UserInputType.MouseMovement and resizing then
+	if i.UserInputType==Enum.UserInputType.MouseMovement and resizing then
 		local p = i.Position - W.AbsolutePosition
 		W.Size = UDim2.new(0, math.clamp(p.X,200,600), 0, math.clamp(p.Y,200,600))
 	end
