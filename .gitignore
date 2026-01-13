@@ -134,11 +134,11 @@ local camKey = Enum.KeyCode.F
 local followDistance = 12
 local heightOffset = 6
 local smoothness = 5
+
 --== variables adicionales para F1 mejorada ==--
 local lastVisiblePos = nil
 local occlusionDelay = 0.15 -- segundos antes de considerar que está oculto
 local occlusionTimer = 0
-
 
 local CamBtn = Instance.new("TextButton", Cn)
 CamBtn.Size = UDim2.new(1,-40,0,30)
@@ -180,42 +180,58 @@ local function getClosestEnemy()
 	return closest
 end
 
+--== función de visibilidad mejorada ==
+local function objetivoVisible(camaraPos, objetivo)
+	if not objetivo or not objetivo.Character or not objetivo.Character:FindFirstChild("HumanoidRootPart") then return false end
+	local objetivoPos = objetivo.Character.HumanoidRootPart.Position
+	local rayParams = RaycastParams.new()
+	rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+	rayParams.FilterDescendantsInstances = {C, objetivo.Character} -- ignorar nuestro personaje y objetivo
+	local direction = objetivoPos - camaraPos
+	local rayResult = workspace:Raycast(camaraPos, direction, rayParams)
+	if rayResult then
+		-- golpeó algo que no es el objetivo -> bloqueado
+		return false
+	else
+		return true
+	end
+end
+
+--== RenderStepped actualizado para F1 ==
 RS.RenderStepped:Connect(function(dt)
-    if camFollow then
-        local tgt = getClosestEnemy()
-        if tgt and tgt.Character and tgt.Character:FindFirstChild("HumanoidRootPart") then
-            local root = tgt.Character.HumanoidRootPart
-            if objetivoVisible(Camera.CFrame.Position, root.Position, tgt.Character) then
-                -- enemigo visible
-                lastVisiblePos = root.Position
-                occlusionTimer = 0
+	if camFollow then
+		local tgt = getClosestEnemy()
+		if tgt and tgt.Character and tgt.Character:FindFirstChild("HumanoidRootPart") then
+			local root = tgt.Character.HumanoidRootPart
+			
+			if objetivoVisible(Camera.CFrame.Position, tgt) then
+				-- enemigo visible
+				lastVisiblePos = root.Position
+				occlusionTimer = 0
 
-                local moveDir = root.Velocity.Magnitude > 1 and root.Velocity.Unit or root.CFrame.LookVector
-                local desiredPos = root.Position - moveDir * followDistance + Vector3.new(0, heightOffset, 0)
-                local newPos = Camera.CFrame.Position:Lerp(desiredPos, dt * smoothness)
-                local targetLook = CFrame.new(newPos, root.Position + Vector3.new(0, 2, 0))
-                Camera.CFrame = Camera.CFrame:Lerp(targetLook, dt * smoothness)
-            else
-                -- enemigo oculto
-                occlusionTimer = occlusionTimer + dt
-                if occlusionTimer < occlusionDelay and lastVisiblePos then
-                    -- interpolación hacia última posición visible
-                    local desiredPos = lastVisiblePos - (root.CFrame.LookVector * followDistance) + Vector3.new(0, heightOffset, 0)
-                    local newPos = Camera.CFrame.Position:Lerp(desiredPos, dt * smoothness)
-                    local targetLook = CFrame.new(newPos, lastVisiblePos + Vector3.new(0, 2, 0))
-                    Camera.CFrame = Camera.CFrame:Lerp(targetLook, dt * smoothness)
-                else
-                    -- mantener posición actual y mirar hacia última posición conocida
-                    if lastVisiblePos then
-                        local targetLook = CFrame.new(Camera.CFrame.Position, lastVisiblePos + Vector3.new(0, 2, 0))
-                        Camera.CFrame = Camera.CFrame:Lerp(targetLook, dt * smoothness)
-                    end
-                end
-            end
-        end
-    end
+				local moveDir = root.Velocity.Magnitude > 1 and root.Velocity.Unit or root.CFrame.LookVector
+				local desiredPos = root.Position - moveDir * followDistance + Vector3.new(0, heightOffset, 0)
+				local newPos = Camera.CFrame.Position:Lerp(desiredPos, dt * smoothness)
+				local targetLook = CFrame.new(newPos, root.Position + Vector3.new(0, 2, 0))
+				Camera.CFrame = Camera.CFrame:Lerp(targetLook, dt * smoothness)
+			else
+				-- enemigo oculto
+				occlusionTimer = occlusionTimer + dt
+				if occlusionTimer < occlusionDelay and lastVisiblePos then
+					local desiredPos = lastVisiblePos - (root.CFrame.LookVector * followDistance) + Vector3.new(0, heightOffset, 0)
+					local newPos = Camera.CFrame.Position:Lerp(desiredPos, dt * smoothness)
+					local targetLook = CFrame.new(newPos, lastVisiblePos + Vector3.new(0, 2, 0))
+					Camera.CFrame = Camera.CFrame:Lerp(targetLook, dt * smoothness)
+				else
+					if lastVisiblePos then
+						local targetLook = CFrame.new(Camera.CFrame.Position, lastVisiblePos + Vector3.new(0, 2, 0))
+						Camera.CFrame = Camera.CFrame:Lerp(targetLook, dt * smoothness)
+					end
+				end
+			end
+		end
+	end
 end)
-
 
 --== Auto Rejoin ==--
 local autoRejoin=false
