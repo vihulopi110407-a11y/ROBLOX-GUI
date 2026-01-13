@@ -128,7 +128,7 @@ ESPBtn.MouseButton1Click:Connect(function()
 	ajustarScroll()
 end)
 
---== Cámara F1 ==--
+--== Cámara F1 mejorada con detección de paredes y accesorios ==--
 local camFollow = false
 local camKey = Enum.KeyCode.F
 local followDistance = 12
@@ -161,40 +161,26 @@ UIS.InputBegan:Connect(function(input,gameProcessed)
 	end
 end)
 
-local function getClosestEnemy()
-	if not C or not C:FindFirstChild("HumanoidRootPart") then return nil end
-	local myPos = C.HumanoidRootPart.Position
-	local closest, minDist = nil, math.huge
-	for _,plr in pairs(Plrs:GetPlayers()) do
-		if isEnemy(plr) and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-			local hum = plr.Character:FindFirstChild("Humanoid")
-			if hum and hum.Health>0 then
-				local dist = (plr.Character.HumanoidRootPart.Position - myPos).Magnitude
-				if dist<minDist then
-					minDist=dist
-					closest=plr
-				end
-			end
-		end
-	end
-	return closest
-end
-
 --== función de visibilidad mejorada ==
 local function objetivoVisible(camaraPos, objetivo)
-	if not objetivo or not objetivo.Character or not objetivo.Character:FindFirstChild("HumanoidRootPart") then return false end
-	local objetivoPos = objetivo.Character.HumanoidRootPart.Position
-	local rayParams = RaycastParams.new()
-	rayParams.FilterType = Enum.RaycastFilterType.Blacklist
-	rayParams.FilterDescendantsInstances = {C, objetivo.Character} -- ignorar nuestro personaje y objetivo
-	local direction = objetivoPos - camaraPos
-	local rayResult = workspace:Raycast(camaraPos, direction, rayParams)
-	if rayResult then
-		-- golpeó algo que no es el objetivo -> bloqueado
-		return false
-	else
-		return true
+	if not objetivo or not objetivo.Character then return false end
+	local partsToCheck = {}
+	local hrp = objetivo.Character:FindFirstChild("HumanoidRootPart")
+	local head = objetivo.Character:FindFirstChild("Head")
+	if hrp then table.insert(partsToCheck, hrp) end
+	if head then table.insert(partsToCheck, head) end
+
+	for _, part in pairs(partsToCheck) do
+		local rayParams = RaycastParams.new()
+		rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+		rayParams.FilterDescendantsInstances = {C, objetivo.Character} -- ignorar nuestro personaje y el objetivo
+		local direction = part.Position - camaraPos
+		local rayResult = workspace:Raycast(camaraPos, direction, rayParams)
+		if not rayResult or rayResult.Instance:IsDescendantOf(objetivo.Character) then
+			return true -- al menos un punto visible
+		end
 	end
+	return false -- todos bloqueados
 end
 
 --== RenderStepped actualizado para F1 ==
@@ -203,7 +189,7 @@ RS.RenderStepped:Connect(function(dt)
 		local tgt = getClosestEnemy()
 		if tgt and tgt.Character and tgt.Character:FindFirstChild("HumanoidRootPart") then
 			local root = tgt.Character.HumanoidRootPart
-			
+
 			if objetivoVisible(Camera.CFrame.Position, tgt) then
 				-- enemigo visible
 				lastVisiblePos = root.Position
@@ -232,6 +218,8 @@ RS.RenderStepped:Connect(function(dt)
 		end
 	end
 end)
+
+
 
 --== Auto Rejoin ==--
 local autoRejoin=false
