@@ -1,24 +1,143 @@
-local P = game.Players.LocalPlayer
-local Plrs = game:GetService("Players")
-local RS = game:GetService("RunService")
+local P=game.Players.LocalPlayer
+local Plrs=game:GetService("Players")
+local RS=game:GetService("RunService")
+local UIS=game:GetService("UserInputService")
+local TS=game:GetService("TeleportService")
 
-local C = P.Character or P.CharacterAdded:Wait()
-P.CharacterAdded:Connect(function(char) C = char end)
+local C=P.Character or P.CharacterAdded:Wait()
+P.CharacterAdded:Connect(function(char) C=char end)
+
+-- GUI
+local G=Instance.new("ScreenGui",P:WaitForChild("PlayerGui"))
+G.Name="MainGui"
+
+local W=Instance.new("Frame",G)
+W.Size=UDim2.new(0,320,0,300)
+W.Position=UDim2.new(0.5,-160,0.5,-150)
+W.BackgroundColor3=Color3.fromRGB(20,20,20)
+W.BorderSizePixel=0
+W.Active=true
+
+-- Barra superior
+local B=Instance.new("Frame",W)
+B.Size=UDim2.new(1,0,0,30)
+B.BackgroundColor3=Color3.fromRGB(40,40,40)
+
+local T=Instance.new("TextLabel",B)
+T.Size=UDim2.new(1,-30,1,0)
+T.Text="Control de Funciones"
+T.TextXAlignment=Enum.TextXAlignment.Left
+T.TextColor3=Color3.new(1,1,1)
+T.BackgroundTransparency=1
+T.TextSize=16
+
+local CBtn=Instance.new("TextButton",B)
+CBtn.Size=UDim2.new(0,30,0,30)
+CBtn.Position=UDim2.new(1,-30,0,0)
+CBtn.Text="X"
+CBtn.TextScaled=true
+CBtn.BackgroundColor3=Color3.fromRGB(60,60,60)
+CBtn.BorderSizePixel=0
+CBtn.TextColor3=Color3.new(1,1,1)
+CBtn.MouseButton1Click:Connect(function() G:Destroy() end)
+
+-- Scroll
+local SF=Instance.new("ScrollingFrame",W)
+SF.Size=UDim2.new(1,0,1,-30)
+SF.Position=UDim2.new(0,0,0,30)
+SF.BackgroundTransparency=1
+SF.ScrollBarThickness=8
+SF.CanvasSize=UDim2.new(0,0,0,1)
+local Cn=Instance.new("Frame",SF)
+Cn.Size=UDim2.new(1,0,0,300)
+Cn.BackgroundTransparency=1
+
+-- Funciones
+local function ajustarScroll()
+	local h=0
+	for _,v in pairs(Cn:GetChildren()) do
+		if v:IsA("GuiObject") then
+			local b=v.Position.Y.Offset+v.AbsoluteSize.Y
+			if b>h then h=b end
+		end
+	end
+	SF.CanvasSize=UDim2.new(0,0,0,h)
+end
+
+-- ESP
+local ESP=false
+local espObjs={}
+local function applyESP(p)
+	if p==P or not p.Character or espObjs[p] then return end
+	local h=Instance.new("Highlight",p.Character)
+	h.Name="ESP"
+	h.FillTransparency=1
+	h.OutlineColor=Color3.fromRGB(255,0,0)
+	h.OutlineTransparency=0
+	h.Adornee=p.Character
+	espObjs[p]=h
+end
+local function removeESP(p)
+	if espObjs[p] then espObjs[p]:Destroy() espObjs[p]=nil end
+end
+local function toggleESP(state)
+	ESP=state
+	for _,p in pairs(Plrs:GetPlayers()) do
+		if ESP then applyESP(p) else removeESP(p) end
+	end
+end
+Plrs.PlayerAdded:Connect(function(p)
+	p.CharacterAdded:Connect(function()
+		if ESP then task.wait(0.5) applyESP(p) end
+	end)
+end)
+for _,p in pairs(Plrs:GetPlayers()) do
+	p.CharacterAdded:Connect(function()
+		if ESP then task.wait(0.5) applyESP(p) end
+	end)
+end
+
+local ESPBtn=Instance.new("TextButton",Cn)
+ESPBtn.Size=UDim2.new(1,-40,0,30)
+ESPBtn.Position=UDim2.new(0,20,0,10)
+ESPBtn.Text="ESP: OFF"
+ESPBtn.BackgroundColor3=Color3.fromRGB(60,60,60)
+ESPBtn.TextColor3=Color3.new(1,1,1)
+ESPBtn.BorderSizePixel=0
+ESPBtn.MouseButton1Click:Connect(function()
+	ESP=not ESP
+	ESPBtn.Text=ESP and "ESP: ON" or "ESP: OFF"
+	toggleESP(ESP)
+	ajustarScroll()
+end)
+
+-- Cámara seguidora
+local camFollow=false
+local CamBtn=Instance.new("TextButton",Cn)
+CamBtn.Size=UDim2.new(1,-40,0,30)
+CamBtn.Position=UDim2.new(0,20,0,50)
+CamBtn.Text="Camara: OFF"
+CamBtn.BackgroundColor3=Color3.fromRGB(60,60,60)
+CamBtn.TextColor3=Color3.new(1,1,1)
+CamBtn.BorderSizePixel=0
+CamBtn.MouseButton1Click:Connect(function()
+	camFollow=not camFollow
+	CamBtn.Text=camFollow and "Camara: ON" or "Camara: OFF"
+	ajustarScroll()
+end)
 
 local Cam = workspace.CurrentCamera
-local speed = 5 -- velocidad a la que la cámara sigue
-
 local function getClosestPlayer()
-	local closest = nil
-	local minDist = math.huge
+	local closest=nil
+	local minDist=math.huge
 	if not C or not C:FindFirstChild("HumanoidRootPart") then return nil end
-	local myPos = C.HumanoidRootPart.Position
-	for _, plr in pairs(Plrs:GetPlayers()) do
-		if plr ~= P and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-			local dist = (plr.Character.HumanoidRootPart.Position - myPos).Magnitude
-			if dist < minDist then
-				minDist = dist
-				closest = plr
+	local myPos=C.HumanoidRootPart.Position
+	for _,plr in pairs(Plrs:GetPlayers()) do
+		if plr~=P and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+			local dist=(plr.Character.HumanoidRootPart.Position-myPos).Magnitude
+			if dist<minDist then
+				minDist=dist
+				closest=plr
 			end
 		end
 	end
@@ -26,11 +145,69 @@ local function getClosestPlayer()
 end
 
 RS.RenderStepped:Connect(function(dt)
-	local target = getClosestPlayer()
-	if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-		local targetPos = target.Character.HumanoidRootPart.Position
-		local camPos = Cam.CFrame.Position
-		local newPos = camPos:Lerp(targetPos, dt*speed)
-		Cam.CFrame = CFrame.new(newPos, newPos + Cam.CFrame.LookVector)
+	if camFollow then
+		local target=getClosestPlayer()
+		if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+			local targetPos=target.Character.HumanoidRootPart.Position
+			local camPos=Cam.CFrame.Position
+			local newPos=camPos:Lerp(targetPos, dt*5)
+			Cam.CFrame=CFrame.new(newPos, newPos+Cam.CFrame.LookVector)
+		end
 	end
 end)
+
+-- Auto-Rejoin
+local autoRejoin=false
+local ARBtn=Instance.new("TextButton",Cn)
+ARBtn.Size=UDim2.new(1,-40,0,30)
+ARBtn.Position=UDim2.new(0,20,0,90)
+ARBtn.Text="AutoRejoin: OFF"
+ARBtn.BackgroundColor3=Color3.fromRGB(60,60,60)
+ARBtn.TextColor3=Color3.new(1,1,1)
+ARBtn.BorderSizePixel=0
+ARBtn.MouseButton1Click:Connect(function()
+	autoRejoin=not autoRejoin
+	ARBtn.Text=autoRejoin and "AutoRejoin: ON" or "AutoRejoin: OFF"
+	ajustarScroll()
+	if autoRejoin then
+		task.defer(function()
+			task.wait(2)
+			pcall(function() game:GetService("TeleportService"):Teleport(game.PlaceId,P) end)
+		end)
+	end
+end)
+
+-- Mover ventana
+local drag=false
+local dragStart,startPos
+B.InputBegan:Connect(function(i)
+	if i.UserInputType==Enum.UserInputType.MouseButton1 then drag=true dragStart=i.Position startPos=W.Position end
+end)
+B.InputEnded:Connect(function(i)
+	if i.UserInputType==Enum.UserInputType.MouseButton1 then drag=false end
+end)
+UIS.InputChanged:Connect(function(i)
+	if i.UserInputType==Enum.UserInputType.MouseMovement and drag then
+		local d=i.Position-dragStart
+		W.Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+d.X,startPos.Y.Scale,startPos.Y.Offset+d.Y)
+	end
+end)
+
+-- Redimensionar ventana (esquina inferior derecha)
+local resizeBtn=Instance.new("Frame",W)
+resizeBtn.Size=UDim2.new(0,20,0,20)
+resizeBtn.Position=UDim2.new(1,-20,1,-20)
+resizeBtn.BackgroundColor3=Color3.fromRGB(80,80,80)
+resizeBtn.BorderSizePixel=0
+resizeBtn.Active=true
+local resizing=false
+resizeBtn.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then resizing=true end end)
+UIS.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then resizing=false end end)
+UIS.InputChanged:Connect(function(i)
+	if i.UserInputType==Enum.UserInputType.MouseMovement and resizing then
+		local p=i.Position-W.AbsolutePosition
+		W.Size=UDim2.new(0,math.clamp(p.X,200,600),0,math.clamp(p.Y,200,600))
+	end
+end)
+
+ajustarScroll()
