@@ -15,8 +15,8 @@ local G = Instance.new("ScreenGui", P:WaitForChild("PlayerGui"))
 G.Name = "ArsenalGui"
 
 local W = Instance.new("Frame", G)
-W.Size = UDim2.new(0,360,0,420)
-W.Position = UDim2.new(0.5,-180,0.5,-210)
+W.Size = UDim2.new(0,400,0,420)
+W.Position = UDim2.new(0.5,-200,0.5,-210)
 W.BackgroundColor3 = Color3.fromRGB(20,20,20)
 W.Active = true
 
@@ -43,50 +43,48 @@ CBtn.TextColor3 = Color3.new(1,1,1)
 CBtn.BorderSizePixel = 0
 CBtn.MouseButton1Click:Connect(function() G:Destroy() end)
 
---== scroll ==
-local SF = Instance.new("ScrollingFrame", W)
-SF.Size = UDim2.new(1,0,1,-30)
-SF.Position = UDim2.new(0,0,0,30)
-SF.BackgroundTransparency = 1
-SF.ScrollBarThickness = 8
-SF.CanvasSize = UDim2.new(0,0,0,1)
+--== panel lateral (menú) ==
+local menuPanel = Instance.new("Frame", W)
+menuPanel.Size = UDim2.new(0,120,1,-30)
+menuPanel.Position = UDim2.new(0,0,0,30)
+menuPanel.BackgroundColor3 = Color3.fromRGB(35,35,35)
 
-local Cn = Instance.new("Frame", SF)
-Cn.Size = UDim2.new(1,0,0,600)
-Cn.BackgroundTransparency = 1
+local function createMenuButton(name, posY)
+	local btn = Instance.new("TextButton", menuPanel)
+	btn.Size = UDim2.new(1,0,0,40)
+	btn.Position = UDim2.new(0,0,0,posY)
+	btn.Text = name
+	btn.TextColor3 = Color3.new(1,1,1)
+	btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	btn.BorderSizePixel = 0
+	btn.TextSize = 14
+	return btn
+end
 
-local function ajustarScroll()
-	local h = 0
-	for _,v in pairs(Cn:GetChildren()) do
-		if v:IsA("GuiObject") then
-			local bottom = v.Position.Y.Offset + v.AbsoluteSize.Y
-			if bottom > h then h = bottom end
+local optionsBtn = createMenuButton("Opciones", 0)
+local assignBtn = createMenuButton("Asignar Teclas", 50)
+
+--== panel derecho (contenido) ==
+local contentPanel = Instance.new("Frame", W)
+contentPanel.Size = UDim2.new(1,-120,1,-30)
+contentPanel.Position = UDim2.new(0,120,0,30)
+contentPanel.BackgroundColor3 = Color3.fromRGB(25,25,25)
+
+-- función para mostrar panel de contenido
+local function showPanel(panel)
+	for _,v in pairs(contentPanel:GetChildren()) do
+		if v:IsA("Frame") then
+			v.Visible = false
 		end
 	end
-	SF.CanvasSize = UDim2.new(0,0,0,h)
+	panel.Visible = true
 end
 
---== Carpetas estilo escritorio ==
-local function createFolder(title, posY)
-	local folder = Instance.new("Frame", Cn)
-	folder.Size = UDim2.new(1,-40,0,0)
-	folder.Position = UDim2.new(0,20,0,posY)
-	folder.BackgroundColor3 = Color3.fromRGB(30,30,30)
-	folder.BorderSizePixel = 0
-	local lbl = Instance.new("TextLabel", folder)
-	lbl.Size = UDim2.new(1,0,0,20)
-	lbl.Text = title
-	lbl.TextColor3 = Color3.new(1,1,1)
-	lbl.BackgroundTransparency = 1
-	lbl.TextXAlignment = Enum.TextXAlignment.Left
-	lbl.TextSize = 14
-	return folder
-end
+--== Opciones Panel ==
+local optionsPanel = Instance.new("Frame", contentPanel)
+optionsPanel.Size = UDim2.new(1,0,1,0)
+optionsPanel.BackgroundTransparency = 1
 
-local optionsFolder = createFolder("Opciones", 10)
-local keybindFolder = createFolder("Teclas", 160)
-
---== Opciones ==
 local ESP = false
 local camFollow = false
 local autoRejoin = false
@@ -125,10 +123,9 @@ local function toggleESP(state)
 	end
 end
 
--- Botones de opciones
-local ESPBtn = Instance.new("TextButton", optionsFolder)
-ESPBtn.Size = UDim2.new(1,0,0,30)
-ESPBtn.Position = UDim2.new(0,0,0,30)
+local ESPBtn = Instance.new("TextButton", optionsPanel)
+ESPBtn.Size = UDim2.new(1,-40,0,30)
+ESPBtn.Position = UDim2.new(0,20,0,20)
 ESPBtn.Text = "ESP: OFF"
 ESPBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
 ESPBtn.TextColor3 = Color3.new(1,1,1)
@@ -137,12 +134,11 @@ ESPBtn.MouseButton1Click:Connect(function()
 	ESP = not ESP
 	ESPBtn.Text = ESP and "ESP: ON" or "ESP: OFF"
 	toggleESP(ESP)
-	ajustarScroll()
 end)
 
-local CamBtn = Instance.new("TextButton", optionsFolder)
-CamBtn.Size = UDim2.new(1,0,0,30)
-CamBtn.Position = UDim2.new(0,0,0,70)
+local CamBtn = Instance.new("TextButton", optionsPanel)
+CamBtn.Size = UDim2.new(1,-40,0,30)
+CamBtn.Position = UDim2.new(0,20,0,60)
 CamBtn.Text = "Camara F1: OFF"
 CamBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
 CamBtn.TextColor3 = Color3.new(1,1,1)
@@ -152,9 +148,9 @@ CamBtn.MouseButton1Click:Connect(function()
 	CamBtn.Text = camFollow and "Camara F1: ON" or "Camara F1: OFF"
 end)
 
-local ARBtn = Instance.new("TextButton", optionsFolder)
-ARBtn.Size = UDim2.new(1,0,0,30)
-ARBtn.Position = UDim2.new(0,0,0,110)
+local ARBtn = Instance.new("TextButton", optionsPanel)
+ARBtn.Size = UDim2.new(1,-40,0,30)
+ARBtn.Position = UDim2.new(0,20,0,100)
 ARBtn.Text = "AutoRejoin: OFF"
 ARBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
 ARBtn.TextColor3 = Color3.new(1,1,1)
@@ -162,7 +158,6 @@ ARBtn.BorderSizePixel = 0
 ARBtn.MouseButton1Click:Connect(function()
 	autoRejoin = not autoRejoin
 	ARBtn.Text = autoRejoin and "AutoRejoin: ON" or "AutoRejoin: OFF"
-	ajustarScroll()
 	if autoRejoin then
 		task.defer(function()
 			task.wait(2)
@@ -171,23 +166,28 @@ ARBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
---== Keybinds ==
+--== Asignar Teclas Panel ==
+local keybindPanel = Instance.new("Frame", contentPanel)
+keybindPanel.Size = UDim2.new(1,0,1,0)
+keybindPanel.BackgroundTransparency = 1
+keybindPanel.Visible = false
+
 local Keybinds = {
 	CamaraF1 = Enum.KeyCode.R,
 	ESP = Enum.KeyCode.T,
 }
 
 local function createKeybindUI(labelText, defaultKey, posY)
-	local lbl = Instance.new("TextLabel", keybindFolder)
+	local lbl = Instance.new("TextLabel", keybindPanel)
 	lbl.Size = UDim2.new(0.5,0,0,20)
-	lbl.Position = UDim2.new(0,0,0,posY)
+	lbl.Position = UDim2.new(0,10,0,posY)
 	lbl.Text = labelText
 	lbl.TextColor3 = Color3.new(1,1,1)
 	lbl.BackgroundTransparency = 1
 	lbl.TextXAlignment = Enum.TextXAlignment.Left
 	lbl.TextSize = 14
 
-	local box = Instance.new("TextBox", keybindFolder)
+	local box = Instance.new("TextBox", keybindPanel)
 	box.Size = UDim2.new(0.4,-10,0,20)
 	box.Position = UDim2.new(0.55,0,0,posY)
 	box.Text = defaultKey.Name
@@ -199,108 +199,25 @@ local function createKeybindUI(labelText, defaultKey, posY)
 end
 
 local CamKeyBox = createKeybindUI("Cámara F1:", Keybinds.CamaraF1, 30)
-local ESPKeyBox = createKeybindUI("ESP:", Keybinds.ESP, 60)
+local ESPKeyBox = createKeybindUI("ESP:", Keybinds.ESP, 70)
 
 CamKeyBox.FocusLost:Connect(function()
 	local key = CamKeyBox.Text:upper()
 	local success, enumKey = pcall(function() return Enum.KeyCode[key] end)
-	if success and enumKey then
-		Keybinds.CamaraF1 = enumKey
-	else
-		CamKeyBox.Text = Keybinds.CamaraF1.Name
-	end
+	if success and enumKey then Keybinds.CamaraF1 = enumKey else CamKeyBox.Text = Keybinds.CamaraF1.Name end
 end)
 
 ESPKeyBox.FocusLost:Connect(function()
 	local key = ESPKeyBox.Text:upper()
 	local success, enumKey = pcall(function() return Enum.KeyCode[key] end)
-	if success and enumKey then
-		Keybinds.ESP = enumKey
-	else
-		ESPKeyBox.Text = Keybinds.ESP.Name
-	end
+	if success and enumKey then Keybinds.ESP = enumKey else ESPKeyBox.Text = Keybinds.ESP.Name end
 end)
 
---== Cámara visible ==
-local followDistance = 12
-local heightOffset = 6
-local smoothness = 5
-local lastVisiblePos = nil
-local occlusionDelay = 0.15
-local occlusionTimer = 0
+--== cambiar panel según menú ==
+optionsBtn.MouseButton1Click:Connect(function() showPanel(optionsPanel) end)
+assignBtn.MouseButton1Click:Connect(function() showPanel(keybindPanel) end)
 
-local function esVisible(objetivo)
-	if not objetivo or not objetivo.Character then return false end
-	local hrp = objetivo.Character:FindFirstChild("HumanoidRootPart")
-	if not hrp then return false end
-	local targetPos = hrp.Position + Vector3.new(0,2,0)
-	local camPos = Camera.CFrame.Position
-	local ignoreList = {C, objetivo.Character}
-	local parts = workspace.CurrentCamera:GetPartsObscuringTarget({camPos, targetPos}, ignoreList)
-	return #parts == 0
-end
-
-local function getVisibleEnemy()
-	for _,plr in pairs(Plrs:GetPlayers()) do
-		if plr ~= P and plr.Team ~= P.Team and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-			local hum = plr.Character:FindFirstChild("Humanoid")
-			if hum and hum.Health > 0 and esVisible(plr) then
-				return plr
-			end
-		end
-	end
-	return nil
-end
-
-RS.RenderStepped:Connect(function(dt)
-	if camFollow then
-		local tgt = getVisibleEnemy()
-		if tgt and tgt.Character and tgt.Character:FindFirstChild("HumanoidRootPart") then
-			local root = tgt.Character.HumanoidRootPart
-			local targetPos = root.Position + Vector3.new(0,2,0)
-			local visible = esVisible(tgt)
-
-			if visible then
-				lastVisiblePos = root.Position
-				occlusionTimer = 0
-
-				local moveDir = root.Velocity.Magnitude > 1 and root.Velocity.Unit or root.CFrame.LookVector
-				local desiredPos = root.Position - moveDir * followDistance + Vector3.new(0, heightOffset, 0)
-				local newPos = Camera.CFrame.Position:Lerp(desiredPos, dt*smoothness)
-				local targetLook = CFrame.new(newPos, targetPos)
-				Camera.CFrame = Camera.CFrame:Lerp(targetLook, dt*smoothness)
-			else
-				occlusionTimer = occlusionTimer + dt
-				if occlusionTimer < 0.15 and lastVisiblePos then
-					local desiredPos = lastVisiblePos + Vector3.new(0,heightOffset,0) - (root.CFrame.LookVector * followDistance)
-					local newPos = Camera.CFrame.Position:Lerp(desiredPos, dt*smoothness)
-					local targetLook = CFrame.new(newPos, lastVisiblePos + Vector3.new(0,2,0))
-					Camera.CFrame = Camera.CFrame:Lerp(targetLook, dt*smoothness)
-				elseif lastVisiblePos then
-					local targetLook = CFrame.new(Camera.CFrame.Position, lastVisiblePos + Vector3.new(0,2,0))
-					Camera.CFrame = Camera.CFrame:Lerp(targetLook, dt*smoothness)
-				end
-			end
-		end
-	end
-end)
-
---== Input global ==
-UIS.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then return end
-	if input.UserInputType == Enum.UserInputType.Keyboard then
-		if input.KeyCode == Keybinds.CamaraF1 then
-			camFollow = not camFollow
-			CamBtn.Text = camFollow and "Camara F1: ON" or "Camara F1: OFF"
-		elseif input.KeyCode == Keybinds.ESP then
-			ESP = not ESP
-			ESPBtn.Text = ESP and "ESP: ON" or "ESP: OFF"
-			toggleESP(ESP)
-		end
-	end
-end)
-
---== Mover ventana ==
+--== mover ventana ==
 local drag, dragStart, startPos = false
 B.InputBegan:Connect(function(i)
 	if i.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -310,15 +227,11 @@ B.InputBegan:Connect(function(i)
 	end
 end)
 B.InputEnded:Connect(function(i)
-	if i.UserInputType == Enum.UserInputType.MouseButton1 then
-		drag = false
-	end
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then drag = false end
 end)
 UIS.InputChanged:Connect(function(i)
 	if i.UserInputType == Enum.UserInputType.MouseMovement and drag then
 		local d = i.Position - dragStart
-		W.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+		W.Position = UDim2.new(startPos.X.Scale,startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
 	end
 end)
-
-ajustarScroll()
