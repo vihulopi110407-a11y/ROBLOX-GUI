@@ -110,8 +110,10 @@ ESPBtn.MouseButton1Click:Connect(function()
 	ajustarScroll()
 end)
 
--- Camara estilo F1
+-- Camara estilo F1 con tecla personalizable
 local camFollow=false
+local camKey=Enum.KeyCode.F -- <-- cambiar por cualquier tecla que quieras
+
 local CamBtn=Instance.new("TextButton",Cn)
 CamBtn.Size=UDim2.new(1,-40,0,30)
 CamBtn.Position=UDim2.new(0,20,0,50)
@@ -122,10 +124,18 @@ CamBtn.BorderSizePixel=0
 CamBtn.MouseButton1Click:Connect(function()
 	camFollow=not camFollow
 	CamBtn.Text=camFollow and "Camara F1: ON" or "Camara F1: OFF"
-	ajustarScroll()
 end)
 
-local Cam = workspace.CurrentCamera
+UIS.InputBegan:Connect(function(input,gpe)
+	if not gpe and input.UserInputType==Enum.UserInputType.Keyboard then
+		if input.KeyCode==camKey then
+			camFollow=not camFollow
+			CamBtn.Text=camFollow and "Camara F1: ON" or "Camara F1: OFF"
+		end
+	end
+end)
+
+local Cam=workspace.CurrentCamera
 local followDistance=12
 local heightOffset=6
 local smoothness=5
