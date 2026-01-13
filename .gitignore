@@ -266,16 +266,14 @@ RS.RenderStepped:Connect(function(dt)
 				Camera.CFrame = Camera.CFrame:Lerp(targetLook, dt*smoothness)
 			else
 				occlusionTimer = occlusionTimer + dt
-				if occlusionTimer < occlusionDelay and lastVisiblePos then
+				if occlusionTimer < 0.15 and lastVisiblePos then
 					local desiredPos = lastVisiblePos + Vector3.new(0,heightOffset,0) - (root.CFrame.LookVector * followDistance)
 					local newPos = Camera.CFrame.Position:Lerp(desiredPos, dt*smoothness)
 					local targetLook = CFrame.new(newPos, lastVisiblePos + Vector3.new(0,2,0))
 					Camera.CFrame = Camera.CFrame:Lerp(targetLook, dt*smoothness)
-				else
-					if lastVisiblePos then
-						local targetLook = CFrame.new(Camera.CFrame.Position, lastVisiblePos + Vector3.new(0,2,0))
-						Camera.CFrame = Camera.CFrame:Lerp(targetLook, dt*smoothness)
-					end
+				elseif lastVisiblePos then
+					local targetLook = CFrame.new(Camera.CFrame.Position, lastVisiblePos + Vector3.new(0,2,0))
+					Camera.CFrame = Camera.CFrame:Lerp(targetLook, dt*smoothness)
 				end
 			end
 		end
@@ -303,9 +301,9 @@ local ARBtn=Instance.new("TextButton",Cn)
 ARBtn.Size=UDim2.new(1,-40,0,30)
 ARBtn.Position=UDim2.new(0,20,0,220)
 ARBtn.Text="AutoRejoin: OFF"
-ARBtn.BackgroundColor3=Color3.fromRGB(60,60,60)
-ARBtn.TextColor3=Color3.new(1,1,1)
-ARBtn.BorderSizePixel=0
+ARBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+ARBtn.TextColor3 = Color3.new(1,1,1)
+ARBtn.BorderSizePixel = 0
 ARBtn.MouseButton1Click:Connect(function()
 	autoRejoin = not autoRejoin
 	ARBtn.Text = autoRejoin and "AutoRejoin: ON" or "AutoRejoin: OFF"
@@ -315,6 +313,27 @@ ARBtn.MouseButton1Click:Connect(function()
 			task.wait(2)
 			pcall(function() TS:Teleport(game.PlaceId,P) end)
 		end)
+	end
+end)
+
+--== Mover ventana ==
+local drag, dragStart, startPos = false
+B.InputBegan:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then
+		drag = true
+		dragStart = i.Position
+		startPos = W.Position
+	end
+end)
+B.InputEnded:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then
+		drag = false
+	end
+end)
+UIS.InputChanged:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseMovement and drag then
+		local d = i.Position - dragStart
+		W.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
 	end
 end)
 
