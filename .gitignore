@@ -58,9 +58,21 @@ local isMinimized = false
 local originalSize = W.Size
 MinBtn.MouseButton1Click:Connect(function()
 	if isMinimized then
+		-- Restaurar tamaño
 		W.Size = originalSize
+		for _, child in pairs(W:GetChildren()) do
+			if child ~= B then
+				child.Visible = true
+			end
+		end
 	else
+		-- Minimizar solo a la barra
 		W.Size = UDim2.new(originalSize.X.Scale, originalSize.X.Offset, 0, 30)
+		for _, child in pairs(W:GetChildren()) do
+			if child ~= B then
+				child.Visible = false
+			end
+		end
 	end
 	isMinimized = not isMinimized
 end)
