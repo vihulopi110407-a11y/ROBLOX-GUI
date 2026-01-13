@@ -1,229 +1,263 @@
-local P=game.Players.LocalPlayer
-local Plrs=game:GetService("Players")
-local RS=game:GetService("RunService")
-local UIS=game:GetService("UserInputService")
-local TS=game:GetService("TeleportService")
+-- referencias básicas
+local P = game.Players.LocalPlayer
+local Plrs = game:GetService("Players")
+local RS = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local TS = game:GetService("TeleportService")
 
-local C=P.Character or P.CharacterAdded:Wait()
-P.CharacterAdded:Connect(function(char) C=char end)
+-- personaje listo
+local C = P.Character or P.CharacterAdded:Wait()
+P.CharacterAdded:Connect(function(char) C = char end)
 
 -- GUI
-local G=Instance.new("ScreenGui",P:WaitForChild("PlayerGui"))
-G.Name="MainGui"
+local G = Instance.new("ScreenGui", P:WaitForChild("PlayerGui"))
+G.Name = "MainGui"
 
-local W=Instance.new("Frame",G)
-W.Size=UDim2.new(0,320,0,300)
-W.Position=UDim2.new(0.5,-160,0.5,-150)
-W.BackgroundColor3=Color3.fromRGB(20,20,20)
-W.BorderSizePixel=0
-W.Active=true
+local W = Instance.new("Frame", G)
+W.Size = UDim2.new(0, 320, 0, 340)
+W.Position = UDim2.new(0.5, -160, 0.5, -170)
+W.BackgroundColor3 = Color3.fromRGB(20,20,20)
+W.Active = true
 
--- Barra superior
-local B=Instance.new("Frame",W)
-B.Size=UDim2.new(1,0,0,30)
-B.BackgroundColor3=Color3.fromRGB(40,40,40)
+-- barra superior
+local B = Instance.new("Frame", W)
+B.Size = UDim2.new(1,0,0,30)
+B.BackgroundColor3 = Color3.fromRGB(40,40,40)
 
-local T=Instance.new("TextLabel",B)
-T.Size=UDim2.new(1,-30,1,0)
-T.Text="Control de Funciones"
-T.TextXAlignment=Enum.TextXAlignment.Left
-T.TextColor3=Color3.new(1,1,1)
-T.BackgroundTransparency=1
-T.TextSize=16
+local T = Instance.new("TextLabel", B)
+T.Size = UDim2.new(1,-30,1,0)
+T.Text = "Control de Arsenal"
+T.TextColor3 = Color3.new(1,1,1)
+T.BackgroundTransparency = 1
+T.TextXAlignment = Enum.TextXAlignment.Left
+T.TextSize = 16
 
-local CBtn=Instance.new("TextButton",B)
-CBtn.Size=UDim2.new(0,30,0,30)
-CBtn.Position=UDim2.new(1,-30,0,0)
-CBtn.Text="X"
-CBtn.TextScaled=true
-CBtn.BackgroundColor3=Color3.fromRGB(60,60,60)
-CBtn.BorderSizePixel=0
-CBtn.TextColor3=Color3.new(1,1,1)
+local CBtn = Instance.new("TextButton", B)
+CBtn.Size = UDim2.new(0,30,0,30)
+CBtn.Position = UDim2.new(1,-30,0,0)
+CBtn.Text = "X"
+CBtn.TextScaled = true
+CBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+CBtn.TextColor3 = Color3.new(1,1,1)
+CBtn.BorderSizePixel = 0
 CBtn.MouseButton1Click:Connect(function() G:Destroy() end)
 
--- Scroll
-local SF=Instance.new("ScrollingFrame",W)
-SF.Size=UDim2.new(1,0,1,-30)
-SF.Position=UDim2.new(0,0,0,30)
-SF.BackgroundTransparency=1
-SF.ScrollBarThickness=8
-SF.CanvasSize=UDim2.new(0,0,0,1)
-local Cn=Instance.new("Frame",SF)
-Cn.Size=UDim2.new(1,0,0,300)
-Cn.BackgroundTransparency=1
+-- scroll
+local SF = Instance.new("ScrollingFrame", W)
+SF.Size = UDim2.new(1,0,1,-30)
+SF.Position = UDim2.new(0,0,0,30)
+SF.BackgroundTransparency = 1
+SF.ScrollBarThickness = 8
+SF.CanvasSize = UDim2.new(0,0,0,1)
+
+local Cn = Instance.new("Frame", SF)
+Cn.Size = UDim2.new(1,0,0,400)
+Cn.BackgroundTransparency = 1
 
 local function ajustarScroll()
-	local h=0
+	local h = 0
 	for _,v in pairs(Cn:GetChildren()) do
 		if v:IsA("GuiObject") then
-			local b=v.Position.Y.Offset+v.AbsoluteSize.Y
-			if b>h then h=b end
+			local bottom = v.Position.Y.Offset + v.AbsoluteSize.Y
+			if bottom > h then h = bottom end
 		end
 	end
-	SF.CanvasSize=UDim2.new(0,0,0,h)
+	SF.CanvasSize = UDim2.new(0,0,0,h)
 end
 
--- ESP
-local ESP=false
-local espObjs={}
+-------- ESP con color por equipo --------
+
+local ESP = false
+local espObjs = {}
+
 local function applyESP(p)
-	if p==P or not p.Character or espObjs[p] then return end
-	local h=Instance.new("Highlight",p.Character)
-	h.Name="ESP"
-	h.FillTransparency=1
-	h.OutlineColor=Color3.fromRGB(255,0,0)
-	h.OutlineTransparency=0
-	h.Adornee=p.Character
-	espObjs[p]=h
+	if espObjs[p] then return end
+	if not p.Character then return end
+
+	local color
+	if p.Team == P.Team then
+		color = Color3.fromRGB(0, 120, 255) -- azul compañeros
+	else
+		color = Color3.fromRGB(255, 0, 0)   -- rojo enemigos
+	end
+
+	local h = Instance.new("Highlight")
+	h.Name = "ESP"
+	h.FillTransparency = 1
+	h.OutlineColor = color
+	h.OutlineTransparency = 0
+	h.Adornee = p.Character
+	h.Parent = p.Character
+
+	espObjs[p] = h
 end
+
 local function removeESP(p)
-	if espObjs[p] then espObjs[p]:Destroy() espObjs[p]=nil end
-end
-local function toggleESP(state)
-	ESP=state
-	for _,p in pairs(Plrs:GetPlayers()) do
-		if ESP then applyESP(p) else removeESP(p) end
+	if espObjs[p] then
+		espObjs[p]:Destroy()
+		espObjs[p] = nil
 	end
 end
-Plrs.PlayerAdded:Connect(function(p)
-	p.CharacterAdded:Connect(function()
-		if ESP then task.wait(0.5) applyESP(p) end
+
+local function toggleESP(state)
+	ESP = state
+	for _,plr in pairs(Plrs:GetPlayers()) do
+		if ESP then applyESP(plr) else removeESP(plr) end
+	end
+end
+
+Plrs.PlayerAdded:Connect(function(plr)
+	plr.CharacterAdded:Connect(function()
+		if ESP then task.wait(0.5) applyESP(plr) end
 	end)
 end)
-for _,p in pairs(Plrs:GetPlayers()) do
-	p.CharacterAdded:Connect(function()
-		if ESP then task.wait(0.5) applyESP(p) end
+
+for _,plr in pairs(Plrs:GetPlayers()) do
+	plr.CharacterAdded:Connect(function()
+		if ESP then task.wait(0.5) applyESP(plr) end
 	end)
 end
 
-local ESPBtn=Instance.new("TextButton",Cn)
-ESPBtn.Size=UDim2.new(1,-40,0,30)
-ESPBtn.Position=UDim2.new(0,20,0,10)
-ESPBtn.Text="ESP: OFF"
-ESPBtn.BackgroundColor3=Color3.fromRGB(60,60,60)
-ESPBtn.TextColor3=Color3.new(1,1,1)
-ESPBtn.BorderSizePixel=0
+local ESPBtn = Instance.new("TextButton", Cn)
+ESPBtn.Size = UDim2.new(1,-40,0,30)
+ESPBtn.Position = UDim2.new(0,20,0,10)
+ESPBtn.Text = "ESP: OFF"
+ESPBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+ESPBtn.TextColor3 = Color3.new(1,1,1)
+ESPBtn.BorderSizePixel = 0
 ESPBtn.MouseButton1Click:Connect(function()
-	ESP=not ESP
-	ESPBtn.Text=ESP and "ESP: ON" or "ESP: OFF"
+	ESP = not ESP
+	ESPBtn.Text = ESP and "ESP: ON" or "ESP: OFF"
 	toggleESP(ESP)
 	ajustarScroll()
 end)
 
--- Camara estilo F1 con tecla personalizable
-local camFollow=false
-local camKey=Enum.KeyCode.F -- <-- cambiar por cualquier tecla que quieras
+-------- Cámara F1 ignorando aliados --------
 
-local CamBtn=Instance.new("TextButton",Cn)
-CamBtn.Size=UDim2.new(1,-40,0,30)
-CamBtn.Position=UDim2.new(0,20,0,50)
-CamBtn.Text="Camara F1: OFF"
-CamBtn.BackgroundColor3=Color3.fromRGB(60,60,60)
-CamBtn.TextColor3=Color3.new(1,1,1)
-CamBtn.BorderSizePixel=0
+local camFollow = false
+local camKey = Enum.KeyCode.F
+
+local CamBtn = Instance.new("TextButton", Cn)
+CamBtn.Size = UDim2.new(1,-40,0,30)
+CamBtn.Position = UDim2.new(0,20,0,50)
+CamBtn.Text = "Camara F1: OFF"
+CamBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+CamBtn.TextColor3 = Color3.new(1,1,1)
+CamBtn.BorderSizePixel = 0
 CamBtn.MouseButton1Click:Connect(function()
-	camFollow=not camFollow
-	CamBtn.Text=camFollow and "Camara F1: ON" or "Camara F1: OFF"
+	camFollow = not camFollow
+	CamBtn.Text = camFollow and "Camara F1: ON" or "Camara F1: OFF"
 end)
 
-UIS.InputBegan:Connect(function(input,gpe)
-	if not gpe and input.UserInputType==Enum.UserInputType.Keyboard then
-		if input.KeyCode==camKey then
-			camFollow=not camFollow
-			CamBtn.Text=camFollow and "Camara F1: ON" or "Camara F1: OFF"
+UIS.InputBegan:Connect(function(input,gameProcessed)
+	if not gameProcessed and input.UserInputType == Enum.UserInputType.Keyboard then
+		if input.KeyCode == camKey then
+			camFollow = not camFollow
+			CamBtn.Text = camFollow and "Camara F1: ON" or "Camara F1: OFF"
 		end
 	end
 end)
 
-local Cam=workspace.CurrentCamera
-local followDistance=12
-local heightOffset=6
-local smoothness=5
+local Cam = workspace.CurrentCamera
+local followDistance = 12
+local heightOffset = 6
+local smoothness = 5
 
--- Nuevo: ignorar jugadores de mi equipo
-local function getClosestPlayer()
-	local closest, minDist=nil, math.huge
+local function getClosestEnemy()
+	local closest, minDist = nil, math.huge
 	if not C or not C:FindFirstChild("HumanoidRootPart") then return nil end
-	local myPos=C.HumanoidRootPart.Position
-	for _, plr in pairs(Plrs:GetPlayers()) do
-		if plr~=P and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-			if plr.Team ~= P.Team then
-				local dist=(plr.Character.HumanoidRootPart.Position-myPos).Magnitude
-				if dist<minDist then
-					minDist=dist
-					closest=plr
+	local myPos = C.HumanoidRootPart.Position
+
+	for _,plr in pairs(Plrs:GetPlayers()) do
+		if plr ~= P and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+			if plr.Team ~= P.Team then -- solo enemigos
+				local dist = (plr.Character.HumanoidRootPart.Position - myPos).Magnitude
+				if dist < minDist then
+					minDist = dist
+					closest = plr
 				end
 			end
 		end
 	end
+
 	return closest
 end
 
 RS.RenderStepped:Connect(function(dt)
 	if camFollow then
-		local target=getClosestPlayer()
-		if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-			local root=target.Character.HumanoidRootPart
-			local moveDir=root.Velocity.Magnitude>1 and root.Velocity.Unit or root.CFrame.LookVector
-			local desiredPos=root.Position - moveDir*followDistance + Vector3.new(0,heightOffset,0)
-			local newPos=Cam.CFrame.Position:Lerp(desiredPos, dt*smoothness)
-			local lookAt=root.Position + Vector3.new(0,2,0)
-			Cam.CFrame=CFrame.new(newPos, lookAt)
+		local tgt = getClosestEnemy()
+		if tgt and tgt.Character and tgt.Character:FindFirstChild("HumanoidRootPart") then
+			local root = tgt.Character.HumanoidRootPart
+			local moveDir = root.Velocity.Magnitude > 1 and root.Velocity.Unit or root.CFrame.LookVector
+			local desiredPos = root.Position - moveDir*followDistance + Vector3.new(0,heightOffset,0)
+			local newPos = Cam.CFrame.Position:Lerp(desiredPos, dt*smoothness)
+			local lookAt = root.Position + Vector3.new(0,2,0)
+			Cam.CFrame = CFrame.new(newPos, lookAt)
 		end
 	end
 end)
 
--- Auto-Rejoin
-local autoRejoin=false
-local ARBtn=Instance.new("TextButton",Cn)
-ARBtn.Size=UDim2.new(1,-40,0,30)
-ARBtn.Position=UDim2.new(0,20,0,90)
-ARBtn.Text="AutoRejoin: OFF"
-ARBtn.BackgroundColor3=Color3.fromRGB(60,60,60)
-ARBtn.TextColor3=Color3.new(1,1,1)
-ARBtn.BorderSizePixel=0
+-------- Auto‑Rejoin --------
+
+local autoRejoin = false
+local ARBtn = Instance.new("TextButton", Cn)
+ARBtn.Size = UDim2.new(1,-40,0,30)
+ARBtn.Position = UDim2.new(0,20,0,90)
+ARBtn.Text = "AutoRejoin: OFF"
+ARBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+ARBtn.TextColor3 = Color3.new(1,1,1)
+ARBtn.BorderSizePixel = 0
 ARBtn.MouseButton1Click:Connect(function()
-	autoRejoin=not autoRejoin
-	ARBtn.Text=autoRejoin and "AutoRejoin: ON" or "AutoRejoin: OFF"
+	autoRejoin = not autoRejoin
+	ARBtn.Text = autoRejoin and "AutoRejoin: ON" or "AutoRejoin: OFF"
 	ajustarScroll()
 	if autoRejoin then
 		task.defer(function()
 			task.wait(2)
-			pcall(function() TS:Teleport(game.PlaceId,P) end)
+			pcall(function() TS:Teleport(game.PlaceId, P) end)
 		end)
 	end
 end)
 
--- Mover ventana
-local drag=false
-local dragStart,startPos
+-------- Mover y redimensionar ventana --------
+
+local drag, dragStart, startPos = false
 B.InputBegan:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseButton1 then drag=true dragStart=i.Position startPos=W.Position end
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then
+		drag = true
+		dragStart = i.Position
+		startPos = W.Position
+	end
 end)
 B.InputEnded:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseButton1 then drag=false end
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then
+		drag = false
+	end
 end)
 UIS.InputChanged:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseMovement and drag then
-		local d=i.Position-dragStart
-		W.Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+d.X,startPos.Y.Scale,startPos.Y.Offset+d.Y)
+	if i.UserInputType == Enum.UserInputType.MouseMovement and drag then
+		local d = i.Position - dragStart
+		W.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
 	end
 end)
 
--- Redimensionar ventana
-local resizeBtn=Instance.new("Frame",W)
-resizeBtn.Size=UDim2.new(0,20,0,20)
-resizeBtn.Position=UDim2.new(1,-20,1,-20)
-resizeBtn.BackgroundColor3=Color3.fromRGB(80,80,80)
-resizeBtn.BorderSizePixel=0
-resizeBtn.Active=true
-local resizing=false
-resizeBtn.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then resizing=true end end)
-UIS.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then resizing=false end end)
+local resizeBtn = Instance.new("Frame",W)
+resizeBtn.Size = UDim2.new(0,20,0,20)
+resizeBtn.Position = UDim2.new(1,-20,1,-20)
+resizeBtn.BackgroundColor3 = Color3.fromRGB(80,80,80)
+resizeBtn.Active = true
+
+local resizing = false
+resizeBtn.InputBegan:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then resizing = true end
+end)
+UIS.InputEnded:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then resizing = false end
+end)
 UIS.InputChanged:Connect(function(i)
-	if i.UserInputType==Enum.UserInputType.MouseMovement and resizing then
-		local p=i.Position-W.AbsolutePosition
-		W.Size=UDim2.new(0,math.clamp(p.X,200,600),0,math.clamp(p.Y,200,600))
+	if i.UserInputType == Enum.UserInputType.MouseMovement and resizing then
+		local p = i.Position - W.AbsolutePosition
+		W.Size = UDim2.new(0, math.clamp(p.X,200,600), 0, math.clamp(p.Y,200,600))
 	end
 end)
 
