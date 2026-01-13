@@ -5,24 +5,9 @@ local RS = game:GetService("RunService")
 local C = P.Character or P.CharacterAdded:Wait()
 P.CharacterAdded:Connect(function(char) C = char end)
 
--- GUI mínimo
-local G = Instance.new("ScreenGui", P:WaitForChild("PlayerGui"))
-G.Name = "CamFollowGui"
-local W = Instance.new("Frame", G)
-W.Size = UDim2.new(0,300,0,50)
-W.Position = UDim2.new(0.5,-150,0,10)
-W.BackgroundColor3 = Color3.fromRGB(20,20,20)
-W.BorderSizePixel = 0
-W.Active = true
+local Cam = workspace.CurrentCamera
+local speed = 5 -- velocidad a la que la cámara sigue
 
-local T = Instance.new("TextLabel", W)
-T.Size = UDim2.new(1,0,1,0)
-T.Text = "Cámara: Seguimiento activado"
-T.TextColor3 = Color3.fromRGB(255,255,255)
-T.BackgroundTransparency = 1
-T.TextScaled = true
-
--- Función para calcular jugador más cercano
 local function getClosestPlayer()
 	local closest = nil
 	local minDist = math.huge
@@ -40,11 +25,12 @@ local function getClosestPlayer()
 	return closest
 end
 
--- Actualizar cámara cada frame
-RS.RenderStepped:Connect(function()
+RS.RenderStepped:Connect(function(dt)
 	local target = getClosestPlayer()
 	if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-		game.Workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable
-		game.Workspace.CurrentCamera.CFrame = CFrame.new(game.Workspace.CurrentCamera.CFrame.Position, target.Character.HumanoidRootPart.Position)
+		local targetPos = target.Character.HumanoidRootPart.Position
+		local camPos = Cam.CFrame.Position
+		local newPos = camPos:Lerp(targetPos, dt*speed)
+		Cam.CFrame = CFrame.new(newPos, newPos + Cam.CFrame.LookVector)
 	end
 end)
